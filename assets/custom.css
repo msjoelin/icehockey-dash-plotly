@@ -1,0 +1,60 @@
+/* Style for dropdown container */
+.dash-dropdown .Select-control {
+    background-color: #343a40 !important; /* Dark background */
+    border: 1px solid #495057 !important; /* Border matching Darkly */
+    color: white !important;              /* White text */
+    border-radius: 5px !important;       /* Rounded corners */
+}
+
+/* Style for dropdown menu */
+.dash-dropdown .Select-menu-outer {
+    background-color: #343a40 !important; /* Dark background for options */
+    color: white !important;              /* White text */
+}
+
+/* Ensure the text color for the selected value when inactive */
+.dash-dropdown .Select.has-value.Select--single > .Select-control .Select-value .Select-value-label {
+    color: white !important;               /* White text for the selected value */
+}
+
+/* Style for dropdown options */
+.dash-dropdown .Select-option {
+    background-color: #343a40 !important; /* Option background */
+    color: white !important;              /* Option text */
+}
+
+/* Style for selected option */
+.dash-dropdown .Select-option.is-selected {
+    background-color: #495057 !important; /* Highlight selected option */
+    color: white !important;               /* Ensure selected text is visible */
+}
+
+/* Style for the selected value in the dropdown */
+.dash-dropdown .Select-control .Select-value {
+    color: white !important;               /* Make sure selected value is white */
+}
+
+/* Style for the selected value when dropdown is inactive */
+.dash-dropdown .Select-control .Select-value {
+    color: white !important;               /* Ensure selected value is white */
+}
+
+/* Style for placeholder text */
+.dash-dropdown .Select-placeholder {
+    color: #aab8c2 !important;             /* Lighter gray for placeholder text */
+}
+
+/* Style on hover */
+.dash-dropdown .Select-option:hover {
+    background-color: #3e444a !important; /* Darker background on hover */
+    color: white !important;               /* White text on hover */
+}
+
+
+.rounded-icon {
+    display: inline-block;
+    border: 2px solid white; /* Border color */
+    border-radius: 50%; /* Makes it circular */
+    padding: 0px; /* Space around the icon */
+    margin-left: 2px; /* Space between icons */
+}
