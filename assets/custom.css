@@ -58,3 +58,12 @@
     padding: 0px; /* Space around the icon */
     margin-left: 2px; /* Space between icons */
 }
+
+.dropdown-flex {
+    display: flex;
+    gap: 0; /* Remove space between dropdowns */
+}
+
+.hidden-dropdown {
+    display: none;  /* Class to hide dropdowns */
+}
