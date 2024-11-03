@@ -86,7 +86,7 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-1',
+                    active_tab='tab-4',
                     children=[
                         dbc.Tab(label='Table', tab_id='tab-1'),
                         dbc.Tab(label='Table Position by Matchday', tab_id='tab-2'),
@@ -102,8 +102,11 @@ app.layout = html.Div([
         dbc.Row([
             dbc.Col(id='dropdown-container', 
                 width = 2 ,
+                style = {'height': '100%', 'paddingTop': '15px', 'paddingRight': '10px', 'paddingBottom': '10px', 'paddingLeft': '10px'},
                 children =[  
                     dbc.Card(
+                        id = "league_card", 
+                        children = [
                         dbc.CardBody(
                             [
                                 html.H5("League", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
@@ -115,7 +118,7 @@ app.layout = html.Div([
                                     className='dash-radio'
                                 )
                             ]
-                        ),
+                        )],
                         style={'marginBottom': '5px', 'padding': '10px'}
                     ),
                     dcc.Dropdown(
@@ -127,6 +130,8 @@ app.layout = html.Div([
                         style={'marginBottom': '10px'}
                     ),
                     dbc.Card(
+                        id = "homeaway_card",
+                        children = [ 
                         dbc.CardBody(
                             [
                                 html.H5("Home / Away", className="card-title", style={'marginBottom': '10px', 'fontSize': '18px'}),
@@ -143,7 +148,7 @@ app.layout = html.Div([
                                     className='dash-radio'
                                     )
                             ]
-                        ),
+                        )],
                         style={'marginBottom': '5px', 'padding': '10px'}
                     ),
                     dbc.Card(
@@ -166,8 +171,7 @@ app.layout = html.Div([
                                     )
                             ]
                         )],
-                        style={'marginBottom': '5px', 'padding': '10px'}
-                        
+                        style={'marginBottom': '5px', 'padding': '10px'}    
                     ),
                     dcc.Dropdown(
                         id='matchday-dropdown',        
@@ -214,7 +218,7 @@ app.layout = html.Div([
                  children=[
                     dbc.Card(
                     dbc.CardBody(html.Div(id='tab-content')),
-                    className="mt-3"  # Add margin to separate tabs from content
+                    className="mt-3" 
                     )
                  ]
             )
@@ -233,9 +237,9 @@ app.layout = html.Div([
 
 @app.callback(
     [
-        Output('league-dropdown', 'className'),
+        Output('league_card', 'style'),
         Output('season-dropdown', 'className'), 
-        Output('homeaway-dropdown', 'className'),
+        Output('homeaway_card', 'style'),
         Output('matchday-dropdown', 'className'),
         Output('team-dropdown', 'className'), 
         Output('lastgames_card', 'style'), 
@@ -246,21 +250,21 @@ app.layout = html.Div([
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
         # Show dropdown 1, hide dropdown 2
-        return 'dash-dropdown', 'dash-dropdown', 'dash-dropdown','hidden-dropdown','hidden-dropdown',{"display": "block"}, {"display": "none"}
+        return {"display": "block"}, 'dash-dropdown', {"display": "block"},'hidden-dropdown','hidden-dropdown',{"display": "block"}, {"display": "none"}
     elif active_tab == 'tab-2':
         # Show dropdown 2, hide dropdown 1
-        return 'dash-dropdown', 'dash-dropdown', 'hidden-dropdown','hidden-dropdown','hidden-dropdown', {"display": "none"}, {"display": "none"}
+        return {"display": "block"}, 'dash-dropdown', {"display": "none"},'hidden-dropdown','hidden-dropdown', {"display": "none"}, {"display": "none"}
     elif active_tab == 'tab-3':
         # Show dropdown 2, hide dropdown 1
-        return 'dash-dropdown', 'hidden-dropdown', 'hidden-dropdown','dash-dropdown','hidden-dropdown', {"display": "none"}, {"display": "none"}
+        return {"display": "block"}, 'hidden-dropdown', {"display": "none"},'dash-dropdown','hidden-dropdown', {"display": "none"}, {"display": "none"}
     elif active_tab == 'tab-4':
         # Show dropdown 2, hide dropdown 1
-        return 'hidden-dropdown', 'hidden-dropdown', 'hidden-dropdown','hidden-dropdown', 'dash-dropdown', {"display": "none"}, {"display": "none"}
+        return {"display": "none"}, 'hidden-dropdown', {"display": "none"},'hidden-dropdown', 'dash-dropdown', {"display": "none"}, {"display": "none"}
     elif active_tab == 'tab-5':
         # Show dropdown 2, hide dropdown 1
-        return 'dash-dropdown', 'hidden-dropdown', 'hidden-dropdown','hidden-dropdown', 'hidden-dropdown', {"display": "none"}, {"display": "block"}
+        return {"display": "block"}, 'hidden-dropdown', {"display": "none"},'hidden-dropdown', 'hidden-dropdown', {"display": "none"}, {"display": "block"}
     # Default hide all 
-    return 'hidden-dropdown', 'hidden-dropdown', 'hidden-dropdown', 'hidden-dropdown', 'hidden-dropdown', {"display": "none"}, {"display": "none"}
+    return {"display": "none"}, 'hidden-dropdown', {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown', {"display": "none"}, {"display": "none"}
 
 
 # Callback to manage button activation
@@ -612,18 +616,85 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
 def tab_content_teamstat(df_team_filtered):
 
-    df_teamstat_maxmatch = df_team_filtered[df_team_filtered['matchday'] == df_team_filtered['max_matchday']].sort_values(by='season')
+    df_teamstat_maxmatch = df_team_filtered[df_team_filtered['matchday'] == df_team_filtered['max_matchday']].reset_index(drop=True)
+    
+    df_teamstat_maxmatch = df_teamstat_maxmatch.sort_values(by='season')
 
-    fig_scatter_team = px.scatter(
-        df_teamstat_maxmatch,
-        x='season',        
-        y='table_position',     
-        color='league',    
-        title='Table Positions',
-        # labels={'points': 'Points Scored', 'assists': 'Assists'}
+    # Create an area chart
+    fig_area_team = go.Figure()
+
+    # Background area trace (independent of league)
+    fig_area_team.add_trace(go.Scatter(
+        x=df_teamstat_maxmatch['season'],
+        y=[14] * len(df_teamstat_maxmatch),  
+        mode='lines',
+        fill='tonexty',
+        fillcolor='rgba(70, 70, 70, 0.5)',  
+        line=dict(color='rgba(0,0,0,0)'),  
+        showlegend=False
+    ))
+
+    # Define colors for each league
+    color_map = {'shl': 'rgba(0, 0, 255, 0.3)', 'allsvenskan': 'rgba(0, 255, 0, 0.3)'}
+    line_color_map = {'shl': 'blue', 'allsvenskan': 'green'}
+
+    # Prepare colors based on league
+    line_colors = [line_color_map[league] for league in df_teamstat_maxmatch['league']]
+
+    # Add single trace with conditional formatting for line and area color
+    fig_area_team.add_trace(go.Scatter(
+        x=df_teamstat_maxmatch['season'],
+        y=df_teamstat_maxmatch['table_position'],
+        mode='lines+markers+text',
+        # text=[f"Season: {season}<br>League: {league}" for season, league in zip(df_teamstat_maxmatch['season'], df_teamstat_maxmatch['league'])],
+        textposition="top center",
+        fill='tozeroy',  
+        fillcolor='rgba(0, 0, 0, 0)',  
+        line=dict(color='black'),  
+        marker=dict(
+            size=8,
+            color=line_colors,  # Line color changes per league
+        ),
+        text=df_teamstat_maxmatch['league'],  # Tooltip will show league name
+        hoverinfo="text+x+y",
+        showlegend=False
+    ))
+
+
+    # Set y-axis range to start from 14 and go down
+    fig_area_team.update_yaxes(
+        range=[16, -1],
+        tickvals=[1, 14],  # Show ticks and grid lines at 1 and 14
+        autorange=False
     )
 
-    fig_scatter_team.update_yaxes(autorange='reversed')
+    # Set x-axis to categorical for proper season sorting
+    fig_area_team.update_xaxes(type='category')
+
+    fig_area_team = apply_darkly_style(fig_area_team)
+
+    # Add manual legend entries using invisible traces
+    for league, color in color_map.items():
+        fig_area_team.add_trace(go.Scatter(
+            x=[None], y=[None],  # Dummy points
+            mode='markers',
+            marker=dict(color=color, size=8),
+            name=league  # Label for the legend
+        ))
+
+
+    # Customize layout
+    fig_area_team.update_layout(
+        title='Team Performance Over Seasons',
+        xaxis_title='',
+        yaxis_title='Table Position',
+        margin=dict(l=50, r=50, t=50, b=50),
+        paper_bgcolor='rgba(35, 38, 45, 1)',
+        plot_bgcolor='rgba(70, 70, 70, 0.5)',
+        xaxis=dict(
+        range=[-0.5, len(df_teamstat_maxmatch['season'].unique()) - 0.5]  # Adjust range to add padding
+    )
+    )
 
 
     # Mapping results to colors
@@ -671,22 +742,34 @@ def tab_content_teamstat(df_team_filtered):
     return dbc.Container(
         fluid=True,  
         style={'height': '80vh'},  
-        children=[  
+        children=[ 
             dbc.Row(
-                children=[  # Define the content inside the row
+                children=[  
+                    dbc.Col(
+                        html.H2("Leksands IF", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
+                        width=4  ,
+                        style={'height': '200px'}  
+                    ),
                     dbc.Col(
                         dcc.Graph(
-                            id='fig_scatter_team',
-                            figure=fig_scatter_team
+                            id='fig_area_team',
+                            figure=fig_area_team,
+                            style={'height': '100%'}
                         ),
-                        width=4  
+                        width=8 ,
+                        style={'height': '200px'}  
                     ),
+                ], 
+                style={'height': '200px'}  
+            ),
+            dbc.Row(
+                children=[  
                     dbc.Col(
                         dcc.Graph(
                             id='fig_teamstat_matches',
                             figure=fig_teamstat_matches
                         ),
-                        width=8 
+                        width=12 
                     ),
                 ]
             )
@@ -698,28 +781,41 @@ def tab_content_teamcomparison(df_team_season_aggr, metricselector_text):
     df_team_season_aggr = df_team_season_aggr.sort_values(by = 'season')
 
     # Create a scatter plot
-    fig_scatter = px.scatter(
-        df_team_season_aggr,
-        x=metricselector_text,  
-        y='team',  
+#    fig_scatter = px.scatter(
+#        df_team_season_aggr,
+#        x=metricselector_text,  
+#        y='team',  
+#        title='Average ' + metricselector_text + 'per Team',
+#        labels={metricselector_text: metricselector_text, 'team': 'Team'},
+#        color='season', 
+#    )
+
+    fig_scatter = px.line(
+        df_team_season_aggr.sort_values(by = 'season'),
+        y=metricselector_text,  
+        x='season',  
         title='Average ' + metricselector_text + 'per Team',
         labels={metricselector_text: metricselector_text, 'team': 'Team'},
-        color='season', 
+        color='team', 
+        markers = True,
+        category_orders={'season': sorted(df_team_season_aggr['season'].unique())},
     )
+
+    fig_scatter.update_xaxes(type='category')
+
 
     fig_scatter = apply_darkly_style(fig_scatter)
 
-    fig_scatter.update_traces(marker=dict(size=12, symbol='star', colorscale='Viridis'))
-
+    fig_scatter.update_traces(marker=dict(size=10, colorscale='Viridis'))
 
     fig_scatter.update_layout(
-    title_font=dict(size=20, color='white'),
-    xaxis=dict(
-        title='Total Points',  # Update x-axis title
-    ),
-    yaxis=dict(
-        title='',  # Update y-axis title
-    ),
+        title_font=dict(size=20, color='white'),
+        xaxis=dict(
+            title='Total Points',  # Update x-axis title
+        ),
+        yaxis=dict(
+            title='',  # Update y-axis title
+        ),
     )
 
     return dbc.Container(
