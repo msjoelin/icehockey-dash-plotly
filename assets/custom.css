@@ -67,3 +67,10 @@
 .hidden-dropdown {
     display: none;  /* Class to hide dropdowns */
 }
+
+.plotly-header {
+    font-size: 2.0rem;
+    color: white;
+    margin-bottom: 1rem; /* Equivalent to Bootstrap's `mb-4` */
+    text-align: left;
+}
