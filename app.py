@@ -10,6 +10,7 @@ import plotly.graph_objs as go
 from table_styles import get_table_style
 from chart_styles import apply_darkly_style
 from header_info_section import create_header_with_info
+from info_section import create_info_section
 
 
 from google.cloud import bigquery
@@ -77,10 +78,48 @@ app = dash.Dash(__name__,
 
 app.layout = html.Div([
     dbc.Container([
-        # HEADER ROW 
+
+        ### HEADER ROW 
         dbc.Row(
             [
-                dbc.Col(html.H1("Icehockey Data Dashboard"), width=10, className="d-flex align-items-center"),  
+                dbc.Col(html.H1("Icehockey Data Dashboard"), width=5, className="d-flex align-items-center"), 
+                dbc.Col(
+                        dbc.Card(
+                        id = "league_card", 
+                        children = [
+                        dbc.CardBody(
+                            [
+                                html.H5("League", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
+                                dcc.Dropdown(
+                                    id='league-dropdown',
+                                    options=[{'label': cat, 'value': cat} for cat in df_team_games['league'].unique()],
+                                    value='shl',  # Default value
+                                    # labelStyle={'display': 'block'},  # Display each option on a new line
+                                    className='dash-dropdown'
+                                )
+                            ]
+                        )],
+                        # style={'marginBottom': '5px', 'padding': '10px'},
+                    ),width=2
+                ), 
+                dbc.Col(
+                        dbc.Card(
+                        id = "season_card", 
+                        children = [
+                        dbc.CardBody(
+                            [
+                                html.H5("Season", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
+                                dcc.Dropdown(
+                                    id='season-dropdown',
+                                    options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
+                                    value='2024/25',  
+                                    className='dash-dropdown'
+                                )
+                            ]
+                        )],
+                        # style={'marginBottom': '5px', 'padding': '10px'},
+                    ),width=2
+                ),
                 dbc.Col(
                     dbc.Button(
                         "About this dashboard",
@@ -89,7 +128,7 @@ app.layout = html.Div([
                         size="sm",
                         className="float-end",
                     ),
-                    width=2,  
+                    width=3,  
                     className="d-flex align-items-center justify-content-end pe-3"
                 ),
             ],
@@ -116,7 +155,8 @@ app.layout = html.Div([
             centered=True,  # Center the modal
             is_open=False,  # Initial state is closed
         ),
-        # ROW WITH TABS 
+
+        ### TAB ROW
         dbc.Row([
             dbc.Col([
                 dbc.Tabs(
@@ -134,121 +174,181 @@ app.layout = html.Div([
             ])
         ]),
        
-        dbc.Row([
-            dbc.Col(id='dropdown-container', 
-                width = 2 ,
-                style = {'height': '100%', 'paddingTop': '15px', 'paddingRight': '10px', 'paddingBottom': '10px', 'paddingLeft': '10px'},
-                children =[  
-                    dbc.Card(
-                        id = "league_card", 
-                        children = [
-                        dbc.CardBody(
-                            [
-                                html.H5("League", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
-                                dcc.RadioItems(
-                                    id='league-dropdown',
-                                    options=[{'label': cat, 'value': cat} for cat in df_team_games['league'].unique()],
-                                    value='shl',  # Default value
-                                    labelStyle={'display': 'block'},  # Display each option on a new line
-                                    className='dash-radio'
-                                )
-                            ]
-                        )],
-                        style={'marginBottom': '5px', 'padding': '10px'}
-                    ),
-                    dcc.Dropdown(
-                        id='season-dropdown',
-                        options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
-                        value = '2024/25',
-                        placeholder='Select season',
-                        className='dash-dropdown',
-                        style={'marginBottom': '10px'}
-                    ),
-                    dbc.Card(
-                        id = "homeaway_card",
-                        children = [ 
-                        dbc.CardBody(
-                            [
-                                html.H5("Home / Away", className="card-title", style={'marginBottom': '10px', 'fontSize': '18px'}),
-                                dcc.RadioItems(
-                                    id='homeaway-dropdown',        
-                                    options=[
-                                            {'label': 'Home', 'value': 'home'},
-                                            {'label': 'Away', 'value': 'away'},
-                                            {'label': 'Total', 'value': 'total'}
-                                    ],
-                                    value = 'total',
-                                    # placeholder='Select home/away',
-                                    labelStyle={'display': 'block'},  # Display each option on a new line
-                                    className='dash-radio'
+     ### CONTENT HEADER ROW  
+     dbc.Container([
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.H2("Your Title Here", id = "tab-title", style={"textAlign": "left", "margin": "20px 0"}),
+                    width=4 
+                ),
+                dbc.Col(
+                        dbc.Button(
+                            #"Info",
+                            html.I(className="fas fa-info-circle"),
+                            id="info-button",
+                            className="btn-sm btn-info float-end",
+                            n_clicks=0,
+                            style={
+                            "font-size": "1.7rem", 
+                            "color": "white",  
+                            "background-color": "transparent", 
+                            "border": "none"
+                            },
+                        ),
+                        width=1
+                ),
+                # Second Column with Children Content
+                dbc.Col(
+                    [
+                    dbc.Row(
+                    [   
+                    # First Card: Home / Away
+                        dbc.Col(
+                            dbc.Card(
+                                id="homeaway_card",
+                                children=[
+                                    dbc.CardBody(
+                                        [
+                                            html.H5(
+                                                "Home / Away",
+                                                className="card-title",
+                                                style={'marginBottom': '10px', 'fontSize': '18px'}
+                                            ),
+                                            dcc.RadioItems(
+                                                id='homeaway-dropdown',
+                                                options=[
+                                                    {'label': 'Home', 'value': 'home'},
+                                                    {'label': 'Away', 'value': 'away'},
+                                                    {'label': 'Total', 'value': 'total'}
+                                                ],
+                                                value='total',
+                                                labelStyle={'display': 'block'},
+                                                className='dash-radio'
+                                            )
+                                        ]
                                     )
-                            ]
-                        )],
-                        style={'marginBottom': '5px', 'padding': '10px'}
-                    ),
-                    dbc.Card(
-                        id = "lastgames_card",
-                        children = [
-                        dbc.CardBody(
-                            [
-                                html.H5("Games", className="card-title", style={'marginBottom': '10px', 'fontSize': '18px'}),
-                                dcc.RadioItems(
-                                    id='lastgames-radiobutton',        
-                                    options=[
-                                            {'label': 'All', 'value': 'all'},
-                                            {'label': 'Last 5', 'value': 'last5'},
-                                            {'label': 'Last 10', 'value': 'last10'}
-                                    ],
-                                    value = 'all',
-                                    # placeholder='Select home/away',
-                                    labelStyle={'display': 'block'},  # Display each option on a new line
-                                    className='dash-radio'
+                                ],
+                                style={'marginBottom': '10px', 'padding': '10px'}
+                            ),
+                            width=6  
+                        ),
+                        # Second Card: Games
+                        dbc.Col(
+                            dbc.Card(
+                                id="lastgames_card",
+                                children=[
+                                    dbc.CardBody(
+                                        [
+                                            html.H5(
+                                                "Games",
+                                                className="card-title",
+                                                style={'marginBottom': '10px', 'fontSize': '18px'}
+                                            ),
+                                            dcc.RadioItems(
+                                                id='lastgames-radiobutton',
+                                                options=[
+                                                    {'label': 'All', 'value': 'all'},
+                                                    {'label': 'Last 5', 'value': 'last5'},
+                                                    {'label': 'Last 10', 'value': 'last10'}
+                                                ],
+                                                value='all',
+                                                labelStyle={'display': 'block'},
+                                                className='dash-radio'
+                                            )
+                                        ]
                                     )
-                            ]
-                        )],
-                        style={'marginBottom': '5px', 'padding': '10px'}    
+                                ],
+                                style={'marginBottom': '10px', 'padding': '10px'}
+                            ),
+                            width=6  # Adjust width to control spacing
+                        )
+                    ],
+                    justify="start",  # Align cards to the start of the row
+                    align="center",  # Vertically center the cards
                     ),
                     dcc.Dropdown(
-                        id='matchday-dropdown',        
-                        options=[{'label': grp, 'value': grp} for grp in df_team_games['matchday'].unique()],
-                        value = 52,
-                        placeholder='Select matchday',
-                        className='dash-dropdown' ,
-                        style={'marginBottom': '10px'}
-                    ),
+                            id='matchday-dropdown',
+                            options=[{'label': grp, 'value': grp} for grp in df_team_games['matchday'].unique()],
+                            value=52,
+                            placeholder='Select matchday',
+                            className='dash-dropdown',
+                            style={'marginBottom': '10px'}
+                        ),
                     dcc.Dropdown(
-                        id='team-dropdown',        
-                        options=[{'label': grp, 'value': grp} for grp in df_team_games['team'].unique()],
-                        value = 'Leksands IF',
-                        placeholder='Select team',
-                        className='dash-dropdown' , 
-                        searchable=True,
-                        style={'marginBottom': '10px'} 
-                    ), 
-
+                            id='team-dropdown',
+                            options=[{'label': grp, 'value': grp} for grp in df_team_games['team'].unique()],
+                            value='Leksands IF',
+                            placeholder='Select team',
+                            className='dash-dropdown',
+                            searchable=True,
+                            style={'marginBottom': '10px'}
+                        ),
                     html.Div(
-                         id='btn-group-metricselectcontainer',
-                         children = [
-                            html.H5("Select Metric", style={'marginBottom': '10px', 'marginTop': '10px'}),
+                        id='btn-group-metricselectcontainer',
+                        children=[
+                            html.H5(
+                                "Select Metric",
+                                style={'marginBottom': '10px', 'marginTop': '10px'}
+                            ),
                             dbc.ButtonGroup(
                                 [
                                     dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='points', style={'margin': '5px'}),
-                                    dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value = 'score_team', style={'margin': '5px'}),
+                                    dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value='score_team', style={'margin': '5px'}),
                                     dbc.Button("Conceded", id="btn-conceded", n_clicks=0, color="primary", outline=True, value='score_opponent', style={'margin': '5px'}),
                                 ],
-                                id = 'btn-group-metricselector',
-                                vertical=True, 
+                                id='btn-group-metricselector',
+                                vertical=False,
                                 size="md",
                                 className="mb-3",
                                 style={'width': '100%'}
                             )
                         ],
-                        style={"display": "none"} 
+                        style={"display": "none"}
                     ),
-                ]), 
+                     #    html.Div(
+                     #        id='btn-group-teamtab',
+                     #        children=[
+                     #            html.H5(
+                     #                "Select Metric",
+                     #                style={'marginBottom': '10px', 'marginTop': '10px'}
+                     #            ),
+                     #            dbc.ButtonGroup(
+                     #                [
+                     #                    dbc.Button("Overview", id="btn-overview", n_clicks=0, color="primary", outline=True, value='overview', style={'margin': '5px'}),
+                     #                    dbc.Button("Season Stats", id="btn-seasonstat", n_clicks=0, color="primary", outline=True, value='seasonstat', style={'margin': '5px'}),
+                     #                    dbc.Button("Table Positions", id="btn-tblpos", n_clicks=0, color="primary", outline=True, value='tableposition', style={'margin': '5px'}),
+                     #                ],
+                     #                id='btn-group-teamtab2',
+                     #                vertical=True,
+                     #                size="md",
+                     #                className="mb-3",
+                     #                style={'width': '100%'}
+                     #            )
+                     #        ],
+                     #        style={"display": "none"}
+                     #    )
+                    ],
+                    width=7  # Adjust width as needed
+                ),
+                
+            ],
+            justify="between",  # Adjust row alignment (e.g., "center", "start", "end")
+            align="center"  # Adjust vertical alignment
+        )
+     ]),
+        dbc.Row([
+            dbc.Collapse(
+                html.Div("This is some collapsible content!", className="p-2"),
+                id="info-toggle-collapse",
+                is_open=False
+            ),
+        ]),
+       ## MAIN CONTENT  
+        dbc.Row([
             dbc.Col(
                 id='main-content',
-                width = 10, 
+                width = 12, 
                 style={'height': '100%'},  
                  children=[
                     dbc.Card(
@@ -257,7 +357,8 @@ app.layout = html.Div([
                     )
                  ]
             )
-           ]), 
+        ]), 
+
         # Hidden storage for filtered DataFrame  
         dcc.Store(id='table-filtered', data={}),  
         dcc.Store(id='season-league-filtered', data={}),      
@@ -265,6 +366,7 @@ app.layout = html.Div([
         dcc.Store(id='team-filtered', data={}),   
         dcc.Store(id='team-season-aggr', data={}),      
         dcc.Store(id='metricselector-button-text', storage_type='memory'),  
+        dcc.Store(id='selected-tab-text', storage_type='memory')
 
     ], fluid=True
     )
@@ -273,34 +375,60 @@ app.layout = html.Div([
 
 @app.callback(
     [
-        Output('league_card', 'style'),
-        Output('season-dropdown', 'className'), 
         Output('homeaway_card', 'style'),
+        Output('lastgames_card', 'style'),
         Output('matchday-dropdown', 'className'),
         Output('team-dropdown', 'className'), 
-        Output('lastgames_card', 'style'), 
-        Output('btn-group-metricselectcontainer', 'style')
+        Output('btn-group-metricselectcontainer', 'style'),
+        Output('tab-title', 'children')
+
      ],  
     [Input('tabs', 'active_tab')]
 )
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
         # Show dropdown 1, hide dropdown 2
-        return {"display": "block"}, 'dash-dropdown', {"display": "block"},'hidden-dropdown','hidden-dropdown',{"display": "block"}, {"display": "none"}
+        return {"display": "block"}, {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Standings'
     elif active_tab == 'tab-2':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "block"}, 'dash-dropdown', {"display": "none"},'hidden-dropdown','hidden-dropdown', {"display": "none"}, {"display": "none"}
+        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Table Position by Matchday'
     elif active_tab == 'tab-3':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "block"}, 'hidden-dropdown', {"display": "none"},'dash-dropdown','hidden-dropdown', {"display": "none"}, {"display": "none"}
+        return {"display": "none"},  {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, 'Point Distribution'
     elif active_tab == 'tab-4':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown', {"display": "none"},'hidden-dropdown', 'dash-dropdown', {"display": "none"}, {"display": "none"}
+        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, 'Team Statistics'
     elif active_tab == 'tab-5':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "block"}, 'hidden-dropdown', {"display": "none"},'hidden-dropdown', 'hidden-dropdown', {"display": "none"}, {"display": "block"}
+        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, 'Team Comparison'
     # Default hide all 
-    return {"display": "none"}, 'hidden-dropdown', {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown', {"display": "none"}, {"display": "none"}
+    return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a'
+
+
+@app.callback(
+    [Output('tabheader-content', 'children')],  
+    [Input('tabs', 'active_tab')]
+)
+def update_tabheader(active_tab):
+    if active_tab == 'tab-1':
+        # Show dropdown 1, hide dropdown 2
+        return {"display": "block"},'hidden-dropdown','hidden-dropdown',{"display": "block"}
+    elif active_tab == 'tab-2':
+        # Show dropdown 2, hide dropdown 1
+        return {"display": "none"},'hidden-dropdown','hidden-dropdown', {"display": "none"}
+    elif active_tab == 'tab-3':
+        # Show dropdown 2, hide dropdown 1
+        return {"display": "none"},'dash-dropdown','hidden-dropdown', {"display": "none"}
+    elif active_tab == 'tab-4':
+        # Show dropdown 2, hide dropdown 1
+        return {"display": "none"},'hidden-dropdown', 'dash-dropdown', {"display": "none"}
+    elif active_tab == 'tab-5':
+        # Show dropdown 2, hide dropdown 1
+        return {"display": "none"},'hidden-dropdown', 'hidden-dropdown', {"display": "none"}
+    # Default hide all 
+    return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown', {"display": "none"}
+
+
 
 
 # Callback to manage button activation
@@ -498,6 +626,16 @@ def render_content(selected_tab, table_filtered, season_league_filtered, league_
     Output("table-section-collapse", "is_open"),
     Input("table-section-button", "n_clicks"),
     State("table-section-collapse", "is_open"),
+)
+def toggle_info(n_clicks, is_open):
+    if n_clicks:
+        return not is_open
+    return is_open
+
+@app.callback(
+    Output("info-toggle-collapse", "is_open"),
+    Input("info-button", "n_clicks"),
+    State("info-toggle-collapse", "is_open"),
 )
 def toggle_info(n_clicks, is_open):
     if n_clicks:
@@ -1100,8 +1238,6 @@ def tab_content_teamcomparison(df_team_season_aggr, metricselector_text):
     height=1200, 
     title = None
     )
-
- 
 
     return dbc.Container(
     fluid=True,
