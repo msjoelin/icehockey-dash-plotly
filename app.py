@@ -9,7 +9,6 @@ import plotly.graph_objs as go
 
 from table_styles import get_table_style
 from chart_styles import apply_darkly_style
-from header_info_section import create_header_with_info
 from info_section import create_info_section
 
 
@@ -178,26 +177,58 @@ app.layout = html.Div([
      dbc.Container([
         dbc.Row(
             [
-                dbc.Col(
-                    html.H2("Your Title Here", id = "tab-title", style={"textAlign": "left", "margin": "20px 0"}),
-                    width=4 
-                ),
-                dbc.Col(
-                        dbc.Button(
-                            #"Info",
-                            html.I(className="fas fa-info-circle"),
-                            id="info-button",
-                            className="btn-sm btn-info float-end",
-                            n_clicks=0,
-                            style={
-                            "font-size": "1.7rem", 
-                            "color": "white",  
-                            "background-color": "transparent", 
-                            "border": "none"
-                            },
+
+            # First Container: Header and Info 
+            dbc.Col(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            html.H2("Your Title Here", id="tab-title", style={"textAlign": "left", "margin": "20px 0"}),
+                            width="auto"
                         ),
-                        width=1
+                        dbc.Col(
+                            dbc.Button(
+                                html.I(className="fas fa-info-circle"),
+                                id="info-button",
+                                className="btn-sm btn-info float-end",
+                                n_clicks=0,
+                                style={
+                                    "font-size": "1.7rem",
+                                    "color": "white",
+                                    "background-color": "transparent",
+                                    "border": "none"
+                                },
+                            ),
+                            width="auto"
+                        ),
+                    ],
+                    className="g-0",  # Ensures no gaps between inner columns
                 ),
+                width=5  # Total width for this column group
+            ),
+
+            html.Div(
+                        id='container_table_filters',
+                        children=[
+                            html.H5(
+                                # "Select Metric",
+                                # style={'marginBottom': '10px', 'marginTop': '10px'}
+                            ),
+                            dbc.ButtonGroup(
+                                [
+                                    dbc.Button("Total", id="btn-total", n_clicks=0, color="primary", outline=True, value='standings_total', style={'margin': '5px'}),
+                                    dbc.Button("Home", id="btn-home", n_clicks=0, color="primary", outline=True, value='standings_home', style={'margin': '5px'}),
+                                    dbc.Button("Away", id="btn-away", n_clicks=0, color="primary", outline=True, value='standings_away', style={'margin': '5px'}),
+                                ],
+                                id='btn-standings-homeaway',
+                                vertical=False,
+                                size="md",
+                                className="mb-3",
+                                style={'width': '100%'}
+                            )
+                        ],
+                        style={"display": "none"}
+                    ),
                 # Second Column with Children Content
                 dbc.Col(
                     [
@@ -337,7 +368,8 @@ app.layout = html.Div([
             align="center"  # Adjust vertical alignment
         )
      ]),
-        dbc.Row([
+     
+    dbc.Row([
             dbc.Collapse(
                 html.Div("This is some collapsible content!", className="p-2"),
                 id="info-toggle-collapse",
@@ -345,7 +377,7 @@ app.layout = html.Div([
             ),
         ]),
        ## MAIN CONTENT  
-        dbc.Row([
+    dbc.Row([
             dbc.Col(
                 id='main-content',
                 width = 12, 
@@ -366,8 +398,8 @@ app.layout = html.Div([
         dcc.Store(id='team-filtered', data={}),   
         dcc.Store(id='team-season-aggr', data={}),      
         dcc.Store(id='metricselector-button-text', storage_type='memory'),  
-        dcc.Store(id='selected-tab-text', storage_type='memory')
-
+        dcc.Store(id='selected-tab-text', storage_type='memory'),
+        dcc.Store(id='btn-group-standings_homeaway', storage_type='memory')
     ], fluid=True
     )
 ])
@@ -380,7 +412,8 @@ app.layout = html.Div([
         Output('matchday-dropdown', 'className'),
         Output('team-dropdown', 'className'), 
         Output('btn-group-metricselectcontainer', 'style'),
-        Output('tab-title', 'children')
+        Output('tab-title', 'children'), 
+        Output('info-toggle-collapse', 'children')
 
      ],  
     [Input('tabs', 'active_tab')]
@@ -388,21 +421,21 @@ app.layout = html.Div([
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
         # Show dropdown 1, hide dropdown 2
-        return {"display": "block"}, {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Standings'
+        return {"display": "block"}, {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Standings', 'This section contains standings, based on filter selection.'
     elif active_tab == 'tab-2':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Table Position by Matchday'
+        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Table Position by Matchday', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
     elif active_tab == 'tab-3':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"},  {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, 'Point Distribution'
+        return {"display": "none"},  {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, 'Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
     elif active_tab == 'tab-4':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, 'Team Statistics'
+        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, 'Team Statistics', 'This section visualizes team statistics.'
     elif active_tab == 'tab-5':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, 'Team Comparison'
+        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, 'Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
     # Default hide all 
-    return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a'
+    return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a', 'n/a'
 
 
 @app.callback(
@@ -598,6 +631,7 @@ def render_content(selected_tab, table_filtered, season_league_filtered, league_
 
     df_season_league_filtered = pd.DataFrame(season_league_filtered)
 
+
     # df_season_league_max = df_season_league_filtered[df_season_league_filtered['max_matchday'] == df_season_league_filtered['matchday']]
 
     df_league_matchday_filtered =  pd.DataFrame(league_matchday_filtered)
@@ -621,17 +655,7 @@ def render_content(selected_tab, table_filtered, season_league_filtered, league_
         return tab_content_teamcomparison(df_team_season_aggr, metricselector_text)
 
 
-
-@app.callback(
-    Output("table-section-collapse", "is_open"),
-    Input("table-section-button", "n_clicks"),
-    State("table-section-collapse", "is_open"),
-)
-def toggle_info(n_clicks, is_open):
-    if n_clicks:
-        return not is_open
-    return is_open
-
+# Callback for Information Toggle 
 @app.callback(
     Output("info-toggle-collapse", "is_open"),
     Input("info-button", "n_clicks"),
@@ -643,7 +667,7 @@ def toggle_info(n_clicks, is_open):
     return is_open
 
 
-# CALLBACKS
+# Callback for about modal 
 @app.callback(
     Output("about-modal", "is_open"),
     [Input("about-button", "n_clicks"), Input("close-modal", "n_clicks")],
@@ -673,11 +697,6 @@ def tab_content_table(df_table_filtered):
         fluid=True,
         style={'height': '80vh'},  
         children=[
-                create_header_with_info(
-                header_text="Standings", 
-                info_text="This section contains standings, based on filter selection.", 
-                button_id="table-section"
-            ),
         dbc.Row([
             dbc.Col(
                 dash_table.DataTable(
@@ -805,15 +824,7 @@ def tab_content_points(df_season_league_filtered):
         fluid=True,
         style={'height': '80vh'},  
         children=[
-            create_header_with_info(
-                header_text="Table Position by Matchday: " + league_txt + " " + season_txt, 
-                info_text=html.Div([  
-                        html.P("This section show the table position by team for each matchday.", style={"margin-bottom": "0.1rem"}),
-                        html.P("Each line represents one team. Double click on a team in the legend to the right to show one specific team. ", style={"margin-bottom": "0.2rem"})
-                    ]), 
-                button_id="table-section"
-            )
-            ,dbc.Row(
+            dbc.Row(
                 style={'height': '100%'},  
                 children=[
                     dbc.Col(
@@ -866,16 +877,7 @@ def tab_content_pointdistr(df_league_matchday_filtered):
         fluid=True,
         style={'height': '80vh'},  # Set the container to full viewport height
         children=[
-            create_header_with_info(
-                header_text="Point Distribution per Season", 
-                info_text=html.Div([  
-                        html.P("This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. ", style={"margin-bottom": "0.1rem"}),
-                        html.P("Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value", style={"margin-bottom": "0.2rem"}),
-                        html.P("Hoover for more information. ", style={"margin-bottom": "0.2rem"})
-                    ]), 
-                button_id="table-section"
-            )
-            ,dbc.Row(
+            dbc.Row(
                 style={'height': '100%'},  
                 children=[
                     dbc.Col(
@@ -962,7 +964,7 @@ def tab_content_teamstat(df_team_filtered):
         radialaxis=dict(visible=True, range=[0, 1.2]),  # Adjusted range for normalized metrics
         ),
         showlegend=True,
-        title="Radar Chart for One Team"
+        title="Radar Chart by Season"
     )
 
     fig_radar = apply_darkly_style(fig_radar)
@@ -1098,14 +1100,6 @@ def tab_content_teamstat(df_team_filtered):
         fluid=True,  
         style={'height': '80vh'},  
         children=[ 
-            create_header_with_info(
-                header_text="Leksands IF", 
-                info_text=html.Div([  
-                        html.P("This section visualizes team statistics. ", style={"margin-bottom": "0.1rem"}),
-                        html.P("A narrow box means that teams are close together, a wide box means that teams are spread out. ", style={"margin-bottom": "0.2rem"}),
-                    ]), 
-                button_id="table-section"
-            ),
             dbc.Row(
                 children=[
                     dbc.Col(
@@ -1243,14 +1237,6 @@ def tab_content_teamcomparison(df_team_season_aggr, metricselector_text):
     fluid=True,
     style={'height': '100vh'},  # Set the container to full viewport height
     children=[
-        create_header_with_info(
-                header_text="Team Comparison - Average " + metricselector_text + 'per Team', 
-                info_text=html.Div([  
-                        html.P("This section visualizes the selected metric by team and season", style={"margin-bottom": "0.1rem"}),
-                        html.P("Grey box means that the team didn't play in the selected leauge that season. ", style={"margin-bottom": "0.2rem"}),
-                    ]), 
-                button_id="table-section"
-            ),
         dbc.Row(
             style={'height': '100%'},  
             children=[
