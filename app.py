@@ -24,6 +24,13 @@ q_tblpos = """
   FROM `sportresults-294318.games_data.swehockey_team_games_dashboard` 
   where 1=1 
   """
+q_team_season_metrics = """
+  SELECT *
+  FROM `sportresults-294318.games_data.swehockey_team_season_metrics` 
+  where 1=1 
+  """
+
+df_team_season_metrics = client.query(q_team_season_metrics).to_dataframe()
 
 # df_team_games = client.query(q_tblpos).to_dataframe()
 
@@ -88,17 +95,16 @@ app.layout = html.Div([
                         children = [
                         dbc.CardBody(
                             [
-                                html.H5("League", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
+                                html.H5("League", className="card-title", style={'marginBottom': '5px','fontSize': '18px'}),
                                 dcc.Dropdown(
                                     id='league-dropdown',
                                     options=[{'label': cat, 'value': cat} for cat in df_team_games['league'].unique()],
-                                    value='shl',  # Default value
-                                    # labelStyle={'display': 'block'},  # Display each option on a new line
+                                    value='shl',  
                                     className='dash-dropdown'
                                 )
                             ]
                         )],
-                        # style={'marginBottom': '5px', 'padding': '10px'},
+                       #  style={'marginBottom': '5px', 'padding': '10px'},
                     ),width=2
                 ), 
                 dbc.Col(
@@ -124,7 +130,7 @@ app.layout = html.Div([
                         "About this dashboard",
                         id="about-button",
                         color="info",
-                        size="sm",
+                        size="lg",
                         className="float-end",
                     ),
                     width=3,  
@@ -133,6 +139,7 @@ app.layout = html.Div([
             ],
             className="mb-4",
         ),
+
         # POPUP FOR INFO BUTTON
         # MODAL FOR INFO BUTTON
         dbc.Modal(
@@ -160,7 +167,7 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-1',
+                    active_tab='tab-4',
                     children=[
                         dbc.Tab(label='Table', tab_id='tab-1'),
                         dbc.Tab(label='Table Position by Matchday', tab_id='tab-2'),
@@ -204,100 +211,55 @@ app.layout = html.Div([
                     ],
                     className="g-0",  # Ensures no gaps between inner columns
                 ),
-                width=5  # Total width for this column group
-            ),
-
-            html.Div(
-                        id='container_table_filters',
-                        children=[
-                            html.H5(
-                                # "Select Metric",
-                                # style={'marginBottom': '10px', 'marginTop': '10px'}
-                            ),
-                            dbc.ButtonGroup(
-                                [
-                                    dbc.Button("Total", id="btn-total", n_clicks=0, color="primary", outline=True, value='standings_total', style={'margin': '5px'}),
-                                    dbc.Button("Home", id="btn-home", n_clicks=0, color="primary", outline=True, value='standings_home', style={'margin': '5px'}),
-                                    dbc.Button("Away", id="btn-away", n_clicks=0, color="primary", outline=True, value='standings_away', style={'margin': '5px'}),
-                                ],
-                                id='btn-standings-homeaway',
-                                vertical=False,
-                                size="md",
-                                className="mb-3",
-                                style={'width': '100%'}
-                            )
-                        ],
-                        style={"display": "none"}
-                    ),
+                width=5  
+                ),
+            
                 # Second Column with Children Content
                 dbc.Col(
                     [
-                    dbc.Row(
-                    [   
-                    # First Card: Home / Away
-                        dbc.Col(
-                            dbc.Card(
-                                id="homeaway_card",
-                                children=[
-                                    dbc.CardBody(
-                                        [
-                                            html.H5(
-                                                "Home / Away",
-                                                className="card-title",
-                                                style={'marginBottom': '10px', 'fontSize': '18px'}
-                                            ),
-                                            dcc.RadioItems(
-                                                id='homeaway-dropdown',
-                                                options=[
-                                                    {'label': 'Home', 'value': 'home'},
-                                                    {'label': 'Away', 'value': 'away'},
-                                                    {'label': 'Total', 'value': 'total'}
-                                                ],
-                                                value='total',
-                                                labelStyle={'display': 'block'},
-                                                className='dash-radio'
-                                            )
-                                        ]
-                                    )
+                    html.Div(
+                        id='container_table_filters',
+                        children=[
+                            dbc.Row(
+                                [   
+                                    dbc.Col(
+                                        dbc.ButtonGroup(
+                                            [
+                                                dbc.Button("Total", id="btn-total", n_clicks=0, color="primary", outline=True, value='total', style={'width': '100%', 'margin': '5px'}),
+                                                dbc.Button("Home", id="btn-home", n_clicks=0, color="primary", outline=True, value='home', style={'width': '100%', 'margin': '5px'}),
+                                                dbc.Button("Away", id="btn-away", n_clicks=0, color="primary", outline=True, value='away', style={'width': '100%', 'margin': '5px'}),
+                                            ],
+                                            id='btn-standings-homeaway',
+                                            vertical=False,
+                                            size="md",
+                                            className="mb-3",
+                                            style={'width': '100%'}  # Fill the entire column width
+                                        ),
+                                        width=6  # Takes up half of the row's space
+                                    ),
+                                    dbc.Col(
+                                        dbc.ButtonGroup(
+                                            [
+                                                dbc.Button("All", id="btn-all", n_clicks=0, color="primary", outline=True, value='all', style={'flex': '1', 'margin': '5px'}),
+                                                dbc.Button("Last 5 games", id="btn-last5", n_clicks=0, color="primary", outline=True, value='last5', style={'flex': '1', 'margin': '5px'}),
+                                                dbc.Button("Last 10 games", id="btn-last10", n_clicks=0, color="primary", outline=True, value='last10', style={'flex': '1', 'margin': '5px'}),
+                                            ],
+                                            id='btn-last-games',
+                                            vertical=False,
+                                            size="md",
+                                            className="mb-3",
+                                            style={'width': '100%', 'display': 'flex'} 
+                                        ),
+                                        width=6  
+                                    ),
                                 ],
-                                style={'marginBottom': '10px', 'padding': '10px'}
+                                justify="start",  
+                                align="center",
                             ),
-                            width=6  
-                        ),
-                        # Second Card: Games
-                        dbc.Col(
-                            dbc.Card(
-                                id="lastgames_card",
-                                children=[
-                                    dbc.CardBody(
-                                        [
-                                            html.H5(
-                                                "Games",
-                                                className="card-title",
-                                                style={'marginBottom': '10px', 'fontSize': '18px'}
-                                            ),
-                                            dcc.RadioItems(
-                                                id='lastgames-radiobutton',
-                                                options=[
-                                                    {'label': 'All', 'value': 'all'},
-                                                    {'label': 'Last 5', 'value': 'last5'},
-                                                    {'label': 'Last 10', 'value': 'last10'}
-                                                ],
-                                                value='all',
-                                                labelStyle={'display': 'block'},
-                                                className='dash-radio'
-                                            )
-                                        ]
-                                    )
-                                ],
-                                style={'marginBottom': '10px', 'padding': '10px'}
-                            ),
-                            width=6  # Adjust width to control spacing
-                        )
-                    ],
-                    justify="start",  # Align cards to the start of the row
-                    align="center",  # Vertically center the cards
+                        ],
+                        style={"display": "none"}  
                     ),
+
                     dcc.Dropdown(
                             id='matchday-dropdown',
                             options=[{'label': grp, 'value': grp} for grp in df_team_games['matchday'].unique()],
@@ -324,48 +286,30 @@ app.layout = html.Div([
                             ),
                             dbc.ButtonGroup(
                                 [
-                                    dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='points', style={'margin': '5px'}),
-                                    dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value='score_team', style={'margin': '5px'}),
-                                    dbc.Button("Conceded", id="btn-conceded", n_clicks=0, color="primary", outline=True, value='score_opponent', style={'margin': '5px'}),
+                                    dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='avg_points', style={'margin': '5px'}),
+                                    dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value='avg_scored', style={'margin': '5px'}),
+                                    dbc.Button("Conceded", id="btn-conceded", n_clicks=0, color="primary", outline=True, value='avg_conceded', style={'margin': '5px'}),
+                                    dbc.Button("Spectators Home", id="btn-spectators-home", n_clicks=0, color="primary", outline=True, value='avg_spectators', style={'margin': '5px'}),
+                                    dbc.Button("Spectators Away", id="btn-spectators-away", n_clicks=0, color="primary", outline=True, value='avg_spectators_away', style={'margin': '5px'}),
+                                    dbc.Button("Points Home", id="btn-points-home", n_clicks=0, color="primary", outline=True, value='avg_points_home', style={'margin': '5px'}),
+                                    dbc.Button("Points Away", id="btn-points-away", n_clicks=0, color="primary", outline=True, value='avg_points_away', style={'margin': '5px'}),
                                 ],
                                 id='btn-group-metricselector',
                                 vertical=False,
                                 size="md",
                                 className="mb-3",
-                                style={'width': '100%'}
+                                style={'display': 'flex', 'width': '100%', 'justify-content': 'space-between'}
                             )
                         ],
                         style={"display": "none"}
                     ),
-                     #    html.Div(
-                     #        id='btn-group-teamtab',
-                     #        children=[
-                     #            html.H5(
-                     #                "Select Metric",
-                     #                style={'marginBottom': '10px', 'marginTop': '10px'}
-                     #            ),
-                     #            dbc.ButtonGroup(
-                     #                [
-                     #                    dbc.Button("Overview", id="btn-overview", n_clicks=0, color="primary", outline=True, value='overview', style={'margin': '5px'}),
-                     #                    dbc.Button("Season Stats", id="btn-seasonstat", n_clicks=0, color="primary", outline=True, value='seasonstat', style={'margin': '5px'}),
-                     #                    dbc.Button("Table Positions", id="btn-tblpos", n_clicks=0, color="primary", outline=True, value='tableposition', style={'margin': '5px'}),
-                     #                ],
-                     #                id='btn-group-teamtab2',
-                     #                vertical=True,
-                     #                size="md",
-                     #                className="mb-3",
-                     #                style={'width': '100%'}
-                     #            )
-                     #        ],
-                     #        style={"display": "none"}
-                     #    )
                     ],
-                    width=7  # Adjust width as needed
+                    width=7  
                 ),
                 
             ],
-            justify="between",  # Adjust row alignment (e.g., "center", "start", "end")
-            align="center"  # Adjust vertical alignment
+            justify="between", 
+            align="center"  
         )
      ]),
      
@@ -396,8 +340,11 @@ app.layout = html.Div([
         dcc.Store(id='season-league-filtered', data={}),      
         dcc.Store(id='league-matchday-filtered', data={}),         
         dcc.Store(id='team-filtered', data={}),   
-        dcc.Store(id='team-season-aggr', data={}),      
+        dcc.Store(id='team-season-aggr', data={}), 
+        dcc.Store(id='team-season-metrics', data={}),     
         dcc.Store(id='metricselector-button-text', storage_type='memory'),  
+        dcc.Store(id='homeaway-button-text', storage_type='memory'),  
+        dcc.Store(id='lastgames-button-text', storage_type='memory'),
         dcc.Store(id='selected-tab-text', storage_type='memory'),
         dcc.Store(id='btn-group-standings_homeaway', storage_type='memory')
     ], fluid=True
@@ -405,10 +352,19 @@ app.layout = html.Div([
 ])
 
 
+
+#######################################################################################################
+
+##                                      CALLBACKS 
+
+#######################################################################################################
+
+
+## CALLBACK 1: Dropdown and filter visibility 
+
 @app.callback(
     [
-        Output('homeaway_card', 'style'),
-        Output('lastgames_card', 'style'),
+        Output('container_table_filters', 'style'),
         Output('matchday-dropdown', 'className'),
         Output('team-dropdown', 'className'), 
         Output('btn-group-metricselectcontainer', 'style'),
@@ -421,70 +377,167 @@ app.layout = html.Div([
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
         # Show dropdown 1, hide dropdown 2
-        return {"display": "block"}, {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Standings', 'This section contains standings, based on filter selection.'
+        return {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Standings', 'This section contains standings, based on filter selection.'
     elif active_tab == 'tab-2':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Table Position by Matchday', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
+        return {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Table Position by Matchday', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
     elif active_tab == 'tab-3':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"},  {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, 'Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
+        return {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, 'Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
     elif active_tab == 'tab-4':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, 'Team Statistics', 'This section visualizes team statistics.'
+        return {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, 'Team Statistics', 'This section visualizes team statistics.'
     elif active_tab == 'tab-5':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, 'Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
+        return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, 'Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
     # Default hide all 
-    return {"display": "none"}, {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a', 'n/a'
+    return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a', 'n/a'
 
 
+
+# Callback for table home/away selector 
 @app.callback(
-    [Output('tabheader-content', 'children')],  
-    [Input('tabs', 'active_tab')]
+        [
+        Output('btn-total', 'style'),
+        Output('btn-home', 'style'),
+        Output('btn-away', 'style'),
+        Output('homeaway-button-text', 'data')
+    ],
+    [
+        Input('btn-total', 'n_clicks'),
+        Input('btn-home', 'n_clicks'),
+        Input('btn-away', 'n_clicks'),
+    ],
+    [
+        State('btn-total', 'value'),
+        State('btn-home', 'value'),
+        State('btn-away', 'value'),
+    ]
 )
-def update_tabheader(active_tab):
-    if active_tab == 'tab-1':
-        # Show dropdown 1, hide dropdown 2
-        return {"display": "block"},'hidden-dropdown','hidden-dropdown',{"display": "block"}
-    elif active_tab == 'tab-2':
-        # Show dropdown 2, hide dropdown 1
-        return {"display": "none"},'hidden-dropdown','hidden-dropdown', {"display": "none"}
-    elif active_tab == 'tab-3':
-        # Show dropdown 2, hide dropdown 1
-        return {"display": "none"},'dash-dropdown','hidden-dropdown', {"display": "none"}
-    elif active_tab == 'tab-4':
-        # Show dropdown 2, hide dropdown 1
-        return {"display": "none"},'hidden-dropdown', 'dash-dropdown', {"display": "none"}
-    elif active_tab == 'tab-5':
-        # Show dropdown 2, hide dropdown 1
-        return {"display": "none"},'hidden-dropdown', 'hidden-dropdown', {"display": "none"}
-    # Default hide all 
-    return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown', {"display": "none"}
+
+def highlight_button(_, __, ___, total_value, home_value, away_value):
+    ctx = dash.callback_context
+
+    # Define active and inactive styles
+    active_style = {'backgroundColor': 'blue', 'color': 'white'}
+    inactive_style = {}
+
+    # Set all styles to inactive initially
+    total_style = inactive_style
+    home_style = inactive_style
+    away_style = inactive_style
+    
+     # Determine which button was clicked and apply the active style. 
+    if ctx.triggered:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+        if button_id == 'btn-total':
+            total_style = active_style
+            selected_text = total_value
+        elif button_id == 'btn-home':
+            home_style = active_style
+            selected_text = home_value
+        elif button_id == 'btn-away':
+            away_style = active_style
+            selected_text = away_value
+
+    # If not triggered, default to "points"
+    else:
+        selected_text = total_value  
+        total_style = active_style 
 
 
+    return total_style, home_style, away_style, selected_text
+
+# Callback for table last games selector 
+@app.callback(
+        [
+        Output('btn-all', 'style'),
+        Output('btn-last5', 'style'),
+        Output('btn-last10', 'style'),
+        Output('lastgames-button-text', 'data')
+    ],
+    [
+        Input('btn-all', 'n_clicks'),
+        Input('btn-last5', 'n_clicks'),
+        Input('btn-last10', 'n_clicks'),
+    ],
+    [
+        State('btn-all', 'value'),
+        State('btn-last5', 'value'),
+        State('btn-last10', 'value'),
+    ]
+)
+
+def highlight_button(_, __, ___, all_value, last5_value, last10_value):
+    ctx = dash.callback_context
+
+    # Define active and inactive styles
+    active_style = {'backgroundColor': 'blue', 'color': 'white'}
+    inactive_style = {}
+
+    # Set all styles to inactive initially
+    all_style = inactive_style
+    last5_style = inactive_style
+    last10_style = inactive_style
+    
+     # Determine which button was clicked and apply the active style. 
+    if ctx.triggered:
+        button_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+        if button_id == 'btn-all':
+            all_style = active_style
+            selected_text = all_value
+        elif button_id == 'btn-last5':
+            last5_style = active_style
+            selected_text = last5_value
+        elif button_id == 'btn-last10':
+            last10_style = active_style
+            selected_text = last10_value
+
+    # If not triggered, default to "points"
+    else:
+        selected_text = all_value  
+        all_style = active_style 
 
 
-# Callback to manage button activation
+    return all_style, last5_style, last10_style, selected_text
+
+# Callback for metricselector
 @app.callback(
         [
         Output('btn-points', 'style'),
         Output('btn-scored', 'style'),
         Output('btn-conceded', 'style'),
+        Output('btn-spectators-home', 'style'),
+        Output('btn-spectators-away', 'style'),
+        Output('btn-points-home', 'style'),
+        Output('btn-points-away', 'style'),
         Output('metricselector-button-text', 'data')
     ],
     [
         Input('btn-points', 'n_clicks'),
         Input('btn-scored', 'n_clicks'),
         Input('btn-conceded', 'n_clicks'),
+        Input('btn-spectators-home', 'n_clicks'),
+        Input('btn-spectators-away', 'n_clicks'),
+        Input('btn-points-home', 'n_clicks'),
+        Input('btn-points-away', 'n_clicks'),
+        
     ],
     [
         State('btn-points', 'value'),
         State('btn-scored', 'value'),
         State('btn-conceded', 'value'),
+        State('btn-spectators-home', 'value'),
+        State('btn-spectators-away', 'value'),
+        State('btn-points-home', 'value'),
+        State('btn-points-away', 'value'),
+        
     ]
 )
 
-def highlight_button(_, __, ___, points_value, scored_value, conceded_value):
+def highlight_button(_, __, ___,____,_____,______,_______,  points_value, scored_value, conceded_value, spectatorshome_value, spectatorsaway_value, pointshome_value, pointsaway_value):
     ctx = dash.callback_context
 
     # Define active and inactive styles
@@ -495,7 +548,12 @@ def highlight_button(_, __, ___, points_value, scored_value, conceded_value):
     points_style = inactive_style
     scored_style = inactive_style
     conceded_style = inactive_style
+    spectatorshome_style = inactive_style
+    spectatorsaway_style = inactive_style
+    pointshome_style = inactive_style
+    pointsaway_style = inactive_style
     
+
      # Determine which button was clicked and apply the active style. 
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -509,6 +567,18 @@ def highlight_button(_, __, ___, points_value, scored_value, conceded_value):
         elif button_id == 'btn-conceded':
             conceded_style = active_style
             selected_text = conceded_value
+        elif button_id == 'btn-spectators-home':
+            spectatorshome_style = active_style
+            selected_text = spectatorshome_value
+        elif button_id == 'btn-spectators-away':
+            spectatorsaway_style = active_style
+            selected_text = spectatorsaway_value
+        elif button_id == 'btn-points-home':
+            pointshome_style = active_style
+            selected_text = pointshome_value
+        elif button_id == 'btn-points-away':
+            pointsaway_style = active_style
+            selected_text = pointsaway_value
 
     # If not triggered, default to "points"
     else:
@@ -516,30 +586,32 @@ def highlight_button(_, __, ___, points_value, scored_value, conceded_value):
         points_style = active_style 
 
 
-    return points_style, scored_style, conceded_style, selected_text
+    return points_style, scored_style, conceded_style, spectatorshome_style, spectatorsaway_style, pointshome_style, pointsaway_style, selected_text
 
 
-# Callback to update the DataTable based on selected tab and dropdown
+
+# Callback to update the all datatables and filter selections
 @app.callback(
     [
         Output('table-filtered', 'data'),
         Output('season-league-filtered', 'data'),
         Output('league-matchday-filtered', 'data'), 
         Output('team-filtered', 'data'), 
-        Output('team-season-aggr', 'data')
+        Output('team-season-aggr', 'data'), 
+        Output('team-season-metrics', 'data')
         ],
     [
         Input('league-dropdown', 'value'),
         Input('season-dropdown', 'value'),
         Input('matchday-dropdown', 'value'),
         Input('team-dropdown', 'value'),
-        Input('homeaway-dropdown', 'value'),
-        Input('lastgames-radiobutton', 'value'),
-        Input('metricselector-button-text', 'data')
+        Input('metricselector-button-text', 'data'),
+        Input('homeaway-button-text', 'data'), 
+        Input('lastgames-button-text', 'data')
         ]
 )
 
-def update_table(selected_league, selected_season, selected_matchday, selected_team, selected_homeaway, selected_lastgames, metricselector_text):
+def update_table(selected_league, selected_season, selected_matchday, selected_team, metricselector_text, homeaway_button_text, lastgames_button_text):
     
     # Create the dataframe for the table 
     df_table_filtered = df_team_games[(df_team_games['league'] == selected_league) & 
@@ -547,12 +619,12 @@ def update_table(selected_league, selected_season, selected_matchday, selected_t
                                  (df_team_games['game_id'].notna())]
     
       
-    if selected_homeaway !="total":
-        df_table_filtered = df_table_filtered[df_table_filtered['h_a'] == selected_homeaway]
+    if homeaway_button_text !="total":
+        df_table_filtered = df_table_filtered[df_table_filtered['h_a'] == homeaway_button_text]
     
-    if selected_lastgames =="last5":
+    if lastgames_button_text =="last5":
         df_table_filtered = df_table_filtered.sort_values(by='date', ascending=False).groupby('team').head(5).reset_index(drop=True)
-    if selected_lastgames =="last10":
+    if lastgames_button_text =="last10":
         df_table_filtered = df_table_filtered.sort_values(by='date', ascending=False).groupby('team').head(10).reset_index(drop=True)
     
 
@@ -602,13 +674,15 @@ def update_table(selected_league, selected_season, selected_matchday, selected_t
 
     df_league_filtered = df_team_games[df_team_games['league'] == selected_league]
 
-    df_team_season_aggr =  df_league_filtered[df_league_filtered['game_id'].notna() & 
-                                              (df_league_filtered['result'].astype(str).str.strip() != '')
-                                              ]
+    #df_team_season_aggr =  df_league_filtered[df_league_filtered['game_id'].notna() & 
+    #                                          (df_league_filtered['result'].astype(str).str.strip() != '')
+    #                                          ]
 
-    df_team_season_aggr = df_team_season_aggr.groupby(['team', 'season'])[metricselector_text].mean().reset_index()
+    df_team_season_aggr = df_team_season_metrics[df_team_season_metrics['league'] == selected_league]
+
+    # df_team_season_aggr = df_team_season_aggr.groupby(['team', 'season'])[metricselector_text].mean().reset_index()
     
-    return df_table_filtered.to_dict('records'), df_season_league_filtered.to_dict('records'), df_league_matchday_filtered.to_dict('records'), df_team_filtered.to_dict('records'), df_team_season_aggr.to_dict('records')
+    return df_table_filtered.to_dict('records'), df_season_league_filtered.to_dict('records'), df_league_matchday_filtered.to_dict('records'), df_team_filtered.to_dict('records'), df_team_season_aggr.to_dict('records'), df_team_season_metrics.to_dict('records')
 
 
 # Use the filtered data for content rendering
@@ -621,11 +695,12 @@ def update_table(selected_league, selected_season, selected_matchday, selected_t
         Input('league-matchday-filtered', 'data'), 
         Input('team-filtered', 'data'), 
         Input('team-season-aggr', 'data'),
+        Input('team-season-metrics', 'data'),
         Input('metricselector-button-text', 'data')
         ]
 )
 
-def render_content(selected_tab, table_filtered, season_league_filtered, league_matchday_filtered, team_filtered, team_season_aggr, metricselector_text):
+def render_content(selected_tab, table_filtered, season_league_filtered, league_matchday_filtered, team_filtered, team_season_aggr, team_season_metrics, metricselector_text):
     
     df_table_filtered = pd.DataFrame(table_filtered)
 
@@ -906,6 +981,8 @@ def tab_content_teamstat(df_team_filtered):
 
     df_teamstat_maxmatch = df_team_filtered[df_team_filtered['matchday'] == df_team_filtered['max_matchday']].reset_index(drop=True)
     df_teamstat_maxmatch = df_teamstat_maxmatch.sort_values(by='season')
+    df_teamstat_maxmatch['league_tblpos'] = df_teamstat_maxmatch['league'] + '\t' + df_teamstat_maxmatch['table_position'].astype(int).astype(str)
+
 
     # Aggregation with metrics for radar chart
 
@@ -942,7 +1019,7 @@ def tab_content_teamstat(df_team_filtered):
 
 
 
-    # RADAR CHART 
+    ##################### RADAR CHART 
     metrics_radar = ['norm_avg_scored', 'norm_avg_conceded', 'norm_avg_win', 'norm_avg_lost', 'norm_avg_draw']
     fig_radar = go.Figure()
 
@@ -964,10 +1041,19 @@ def tab_content_teamstat(df_team_filtered):
         radialaxis=dict(visible=True, range=[0, 1.2]),  # Adjusted range for normalized metrics
         ),
         showlegend=True,
-        title="Radar Chart by Season"
+        title="Radar Chart by Season",
+        legend=dict(
+        orientation="h",  # Horizontal layout
+        yanchor="top",
+        y=-0.2,  # Slightly above the chart
+        xanchor="center",
+        x=0.5   # Center horizontally
+    )
     )
 
     fig_radar = apply_darkly_style(fig_radar)
+
+
 
     # CHART FOR TABLE POSITIONS PER SEASON 
     fig_area_team = go.Figure()
@@ -991,7 +1077,8 @@ def tab_content_teamstat(df_team_filtered):
     line_colors = [line_color_map[league] for league in df_teamstat_maxmatch['league']]
 
     # Add single trace with conditional formatting for line and area color
-    fig_area_team.add_trace(go.Scatter(
+    fig_area_team.add_trace(
+        go.Scatter(
         x=df_teamstat_maxmatch['season'],
         y=df_teamstat_maxmatch['table_position'],
         mode='lines+markers+text',
@@ -1004,10 +1091,11 @@ def tab_content_teamstat(df_team_filtered):
             size=8,
             color=line_colors,  # Line color changes per league
         ),
-        text=df_teamstat_maxmatch['league'],  # Tooltip will show league name
+        text=df_teamstat_maxmatch['league'] + ': ' + df_teamstat_maxmatch['table_position'].astype(int).astype(str) ,  # Tooltip will show league name
         hoverinfo="text+x+y",
         showlegend=False
-    ))
+        )
+    )
 
 
     # Format y axis 
@@ -1077,7 +1165,7 @@ def tab_content_teamstat(df_team_filtered):
         marker=dict(
             color=df_team_filtered['color'],
             symbol=df_team_filtered['symbol'],
-            size=12
+            size=10
         ),
         text=df_team_filtered['hover_text'],  # Display the result on hover
         hoverinfo='text'
@@ -1157,6 +1245,8 @@ def tab_content_teamstat(df_team_filtered):
 
 def tab_content_teamcomparison(df_team_season_aggr, metricselector_text):
     
+    df_team_season_aggr = df_team_season_aggr[['team', 'season', metricselector_text]]
+
     df_team_season_aggr = df_team_season_aggr.sort_values(by = 'season')
 
     df_team_season_aggr_pivot = df_team_season_aggr.pivot(index='team', columns='season', values=metricselector_text).reset_index()
