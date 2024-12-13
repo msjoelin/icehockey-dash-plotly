@@ -18,7 +18,7 @@ def create_header_with_info(header_text: str, info_text: str, button_id: str) ->
             dbc.Row(
                 [
                     dbc.Col(
-                        html.H1(header_text, className="plotly-header"),
+                        html.H3(header_text, className="plotly-header"),
                         width=9
                     ),
                     dbc.Col(
