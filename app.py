@@ -21,16 +21,37 @@ client = bigquery.Client.from_service_account_json(key_path)
 
 q_tblpos = """
   SELECT *
-  FROM `sportresults-294318.games_data.swehockey_team_games_dashboard` 
-  where 1=1 
-  """
-q_team_season_metrics = """
-  SELECT *
-  FROM `sportresults-294318.games_data.swehockey_team_season_metrics` 
+  FROM `sportresults-294318.icehockey_plotly_dashboard.swehockey_team_games_dashboard` 
   where 1=1 
   """
 
+q_team_season_metrics = """
+  SELECT *
+  FROM `sportresults-294318.icehockey_plotly_dashboard.swehockey_team_season_metrics` 
+  where 1=1 
+  """
+
+q_matchdays = """
+  SELECT *
+  FROM `sportresults-294318.icehockey_plotly_dashboard.matchdays` 
+  """
+
+q_teams = """
+  SELECT *
+  FROM `sportresults-294318.icehockey_plotly_dashboard.teams` 
+  """
+
+q_team_headtohead = """
+  SELECT *
+  FROM `sportresults-294318.icehockey_plotly_dashboard.team_headtohead` 
+  """
+
+
 df_team_season_metrics = client.query(q_team_season_metrics).to_dataframe()
+df_matchdays = client.query(q_matchdays).to_dataframe()
+df_teams = client.query(q_teams).to_dataframe()
+df_team_headtohead = client.query(q_team_headtohead).to_dataframe()
+
 
 # df_team_games = client.query(q_tblpos).to_dataframe()
 
@@ -89,42 +110,62 @@ app.layout = html.Div([
         dbc.Row(
             [
                 dbc.Col(html.H1("Icehockey Data Dashboard"), width=5, className="d-flex align-items-center"), 
+
                 dbc.Col(
-                        dbc.Card(
-                        id = "league_card", 
-                        children = [
-                        dbc.CardBody(
-                            [
-                                html.H5("League", className="card-title", style={'marginBottom': '5px','fontSize': '18px'}),
-                                dcc.Dropdown(
-                                    id='league-dropdown',
-                                    options=[{'label': cat, 'value': cat} for cat in df_team_games['league'].unique()],
-                                    value='shl',  
-                                    className='dash-dropdown'
-                                )
-                            ]
-                        )],
-                       #  style={'marginBottom': '5px', 'padding': '10px'},
-                    ),width=2
-                ), 
-                dbc.Col(
-                        dbc.Card(
-                        id = "season_card", 
-                        children = [
-                        dbc.CardBody(
-                            [
-                                html.H5("Season", className="card-title", style={'marginBottom': '5px', 'fontSize': '18px'}),
-                                dcc.Dropdown(
-                                    id='season-dropdown',
-                                    options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
-                                    value='2024/25',  
-                                    className='dash-dropdown'
-                                )
-                            ]
-                        )],
-                        # style={'marginBottom': '5px', 'padding': '10px'},
-                    ),width=2
+                    dbc.Card(
+                        id="league_card",
+                        children=[
+                            dbc.CardBody(
+                                children=[
+                                    html.Div(
+                                        children=[
+                                            dcc.Dropdown(
+                                                id='league-dropdown',
+                                                options=[{'label': grp, 'value': grp} for grp in df_team_games['league'].unique()],
+                                                value='shl',  
+                                                className='dash-dropdown'
+                                            ),
+                                            dbc.Tooltip(
+                                                "Select a league", 
+                                                target="league-dropdown", 
+                                            ),
+                                        ],
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
+                    width=2
                 ),
+
+                dbc.Col(
+                    dbc.Card(
+                        id="season_card",
+                        children=[
+                            dbc.CardBody(
+                                children=[
+                                    html.Div(
+                                        children=[
+                                            dcc.Dropdown(
+                                                id='season-dropdown',
+                                                options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
+                                                value='2024/25',  
+                                                className='dash-dropdown'
+                                            ),
+                                            dbc.Tooltip(
+                                                "Select a season", 
+                                                target="season-dropdown", 
+                                            ),
+                                        ],
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
+                    width=2
+                ),
+
+
                 dbc.Col(
                     dbc.Button(
                         "About this dashboard",
@@ -181,16 +222,16 @@ app.layout = html.Div([
         ]),
        
      ### CONTENT HEADER ROW  
-     dbc.Container([
+     dbc.Container(
         dbc.Row(
             [
 
-            # First Container: Header and Info 
+            # First column -> Header and Info - i  
             dbc.Col(
                 dbc.Row(
                     [
                         dbc.Col(
-                            html.H2("Your Title Here", id="tab-title", style={"textAlign": "left", "margin": "20px 0"}),
+                            html.H2("Your Title Here", id="tab-title", style={"textAlign": "left", "margin": "10px"}),
                             width="auto"
                         ),
                         dbc.Col(
@@ -209,14 +250,15 @@ app.layout = html.Div([
                             width="auto"
                         ),
                     ],
-                    className="g-0",  # Ensures no gaps between inner columns
+                    className="g-0",  
                 ),
-                width=5  
+                width=6  
                 ),
             
-                # Second Column with Children Content
+                # Second column with all filters  
                 dbc.Col(
                     [
+                       
                     html.Div(
                         id='container_table_filters',
                         children=[
@@ -232,7 +274,7 @@ app.layout = html.Div([
                                             id='btn-standings-homeaway',
                                             vertical=False,
                                             size="md",
-                                            className="mb-3",
+                                            className="m-3",
                                             style={'width': '100%'}  # Fill the entire column width
                                         ),
                                         width=6  # Takes up half of the row's space
@@ -247,7 +289,7 @@ app.layout = html.Div([
                                             id='btn-last-games',
                                             vertical=False,
                                             size="md",
-                                            className="mb-3",
+                                            className="m-3",
                                             style={'width': '100%', 'display': 'flex'} 
                                         ),
                                         width=6  
@@ -262,28 +304,26 @@ app.layout = html.Div([
 
                     dcc.Dropdown(
                             id='matchday-dropdown',
-                            options=[{'label': grp, 'value': grp} for grp in df_team_games['matchday'].unique()],
+                            options=[{'label': grp, 'value': grp} for grp in df_matchdays['matchday'].unique()],
                             value=52,
                             placeholder='Select matchday',
                             className='dash-dropdown',
-                            style={'marginBottom': '10px'}
+                            searchable=True,
+                            style={'marginBottom': '10px', 'marginTop': '10px'}
                         ),
                     dcc.Dropdown(
                             id='team-dropdown',
-                            options=[{'label': grp, 'value': grp} for grp in df_team_games['team'].unique()],
+                            options=[{'label': grp, 'value': grp} for grp in df_teams['team'].unique()],
                             value='Leksands IF',
                             placeholder='Select team',
                             className='dash-dropdown',
                             searchable=True,
-                            style={'marginBottom': '10px'}
+                            style={'marginBottom': '10px', 'marginTop': '10px'}
                         ),
                     html.Div(
                         id='btn-group-metricselectcontainer',
                         children=[
-                            html.H5(
-                                "Select Metric",
-                                style={'marginBottom': '10px', 'marginTop': '10px'}
-                            ),
+
                             dbc.ButtonGroup(
                                 [
                                     dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='avg_points', style={'margin': '5px'}),
@@ -304,14 +344,16 @@ app.layout = html.Div([
                         style={"display": "none"}
                     ),
                     ],
-                    width=7  
+                    width=6  
                 ),
                 
             ],
-            justify="between", 
-            align="center"  
+            # justify="between", 
+            align="left"  ,
+            style={"paddingLeft": "0", "paddingRight": "0", 'marginLeft': '0'},
         )
-     ]),
+        ,style={"paddingLeft": "0", "paddingRight": "0", 'marginLeft': '0'}
+    ),
      
     dbc.Row([
             dbc.Collapse(
@@ -320,7 +362,8 @@ app.layout = html.Div([
                 is_open=False
             ),
         ]),
-       ## MAIN CONTENT  
+
+    ## MAIN CONTENT ROW  
     dbc.Row([
             dbc.Col(
                 id='main-content',
@@ -339,9 +382,7 @@ app.layout = html.Div([
         dcc.Store(id='table-filtered', data={}),  
         dcc.Store(id='season-league-filtered', data={}),      
         dcc.Store(id='league-matchday-filtered', data={}),         
-        dcc.Store(id='team-filtered', data={}),   
         dcc.Store(id='team-season-aggr', data={}), 
-        dcc.Store(id='team-season-metrics', data={}),     
         dcc.Store(id='metricselector-button-text', storage_type='memory'),  
         dcc.Store(id='homeaway-button-text', storage_type='memory'),  
         dcc.Store(id='lastgames-button-text', storage_type='memory'),
@@ -360,7 +401,7 @@ app.layout = html.Div([
 #######################################################################################################
 
 
-## CALLBACK 1: Dropdown and filter visibility 
+## CALLBACK: Dropdown and filter visibility 
 
 @app.callback(
     [
@@ -394,8 +435,8 @@ def update_dropdown_visibility(active_tab):
     return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a', 'n/a'
 
 
+## CALLBACK: Home or Away Selector in Tab 1
 
-# Callback for table home/away selector 
 @app.callback(
         [
         Output('btn-total', 'style'),
@@ -449,7 +490,7 @@ def highlight_button(_, __, ___, total_value, home_value, away_value):
 
     return total_style, home_style, away_style, selected_text
 
-# Callback for table last games selector 
+## CALLBACK: Last Games Selector in Tab 1
 @app.callback(
         [
         Output('btn-all', 'style'),
@@ -503,7 +544,7 @@ def highlight_button(_, __, ___, all_value, last5_value, last10_value):
 
     return all_style, last5_style, last10_style, selected_text
 
-# Callback for metricselector
+## CALLBACK: Metric Selector in Tab Team Comparison
 @app.callback(
         [
         Output('btn-points', 'style'),
@@ -590,28 +631,23 @@ def highlight_button(_, __, ___,____,_____,______,_______,  points_value, scored
 
 
 
-# Callback to update the all datatables and filter selections
+# CALLBACK: To update the all datatables and filter selections
 @app.callback(
     [
         Output('table-filtered', 'data'),
         Output('season-league-filtered', 'data'),
         Output('league-matchday-filtered', 'data'), 
-        Output('team-filtered', 'data'), 
-        Output('team-season-aggr', 'data'), 
-        Output('team-season-metrics', 'data')
         ],
     [
         Input('league-dropdown', 'value'),
         Input('season-dropdown', 'value'),
         Input('matchday-dropdown', 'value'),
-        Input('team-dropdown', 'value'),
-        Input('metricselector-button-text', 'data'),
         Input('homeaway-button-text', 'data'), 
         Input('lastgames-button-text', 'data')
         ]
 )
 
-def update_table(selected_league, selected_season, selected_matchday, selected_team, metricselector_text, homeaway_button_text, lastgames_button_text):
+def update_table(selected_league, selected_season, selected_matchday, homeaway_button_text, lastgames_button_text):
     
     # Create the dataframe for the table 
     df_table_filtered = df_team_games[(df_team_games['league'] == selected_league) & 
@@ -629,8 +665,7 @@ def update_table(selected_league, selected_season, selected_matchday, selected_t
     
 
 
-    # df_table_filtered = df_table_filtered[df_table_filtered['max_matchday'] == df_table_filtered['matchday']] 
-
+ 
     df_table_filtered = df_table_filtered.sort_values(by=['team', 'date'])
 
     df_table_filtered['last_5_results'] = [','.join(df_table_filtered['result'][max(0, i-4):i+1]) for i in range(len(df_table_filtered))]
@@ -669,23 +704,11 @@ def update_table(selected_league, selected_season, selected_matchday, selected_t
 
     df_league_matchday_filtered = df_team_games[(df_team_games['league'] == selected_league) & 
                                                 (df_team_games['matchday'] == selected_matchday)]
-    
-    df_team_filtered = df_team_games[(df_team_games['team'] == selected_team) & (df_team_games['league'] != 'preseason')]
-
-    df_league_filtered = df_team_games[df_team_games['league'] == selected_league]
-
-    #df_team_season_aggr =  df_league_filtered[df_league_filtered['game_id'].notna() & 
-    #                                          (df_league_filtered['result'].astype(str).str.strip() != '')
-    #                                          ]
-
-    df_team_season_aggr = df_team_season_metrics[df_team_season_metrics['league'] == selected_league]
-
-    # df_team_season_aggr = df_team_season_aggr.groupby(['team', 'season'])[metricselector_text].mean().reset_index()
-    
-    return df_table_filtered.to_dict('records'), df_season_league_filtered.to_dict('records'), df_league_matchday_filtered.to_dict('records'), df_team_filtered.to_dict('records'), df_team_season_aggr.to_dict('records'), df_team_season_metrics.to_dict('records')
+        
+    return df_table_filtered.to_dict('records'), df_season_league_filtered.to_dict('records'), df_league_matchday_filtered.to_dict('records')
 
 
-# Use the filtered data for content rendering
+# CALLBACK to send data into the different tabs 
 @app.callback(
     Output('tab-content', 'children'),
     [
@@ -693,29 +716,19 @@ def update_table(selected_league, selected_season, selected_matchday, selected_t
         Input('table-filtered', 'data'),
         Input('season-league-filtered', 'data'),
         Input('league-matchday-filtered', 'data'), 
-        Input('team-filtered', 'data'), 
-        Input('team-season-aggr', 'data'),
-        Input('team-season-metrics', 'data'),
-        Input('metricselector-button-text', 'data')
+        Input('metricselector-button-text', 'data'),
+        Input('team-dropdown', 'value'),
+        Input('league-dropdown', 'value')
         ]
 )
 
-def render_content(selected_tab, table_filtered, season_league_filtered, league_matchday_filtered, team_filtered, team_season_aggr, team_season_metrics, metricselector_text):
+def render_content(selected_tab, table_filtered, season_league_filtered, league_matchday_filtered,  metricselector_text, selected_team, selected_league):
     
     df_table_filtered = pd.DataFrame(table_filtered)
 
     df_season_league_filtered = pd.DataFrame(season_league_filtered)
 
-
-    # df_season_league_max = df_season_league_filtered[df_season_league_filtered['max_matchday'] == df_season_league_filtered['matchday']]
-
     df_league_matchday_filtered =  pd.DataFrame(league_matchday_filtered)
-
-    df_team_filtered = pd.DataFrame(team_filtered)
-
-
-    df_team_season_aggr = pd.DataFrame(team_season_aggr)
-
 
     # Content rendering logic for each tab
     if selected_tab == 'tab-1':
@@ -725,12 +738,12 @@ def render_content(selected_tab, table_filtered, season_league_filtered, league_
     elif selected_tab == 'tab-3':
         return tab_content_pointdistr(df_league_matchday_filtered)
     elif selected_tab == 'tab-4':
-        return tab_content_teamstat(df_team_filtered)
+        return tab_content_teamstat(selected_team)
     elif selected_tab == 'tab-5':
-        return tab_content_teamcomparison(df_team_season_aggr, metricselector_text)
+        return tab_content_teamcomparison(metricselector_text, selected_league)
 
 
-# Callback for Information Toggle 
+## CALLBACK for Information Toggle 
 @app.callback(
     Output("info-toggle-collapse", "is_open"),
     Input("info-button", "n_clicks"),
@@ -742,7 +755,7 @@ def toggle_info(n_clicks, is_open):
     return is_open
 
 
-# Callback for about modal 
+## CALLBACK "ABOUT DASHBOARD" button 
 @app.callback(
     Output("about-modal", "is_open"),
     [Input("about-button", "n_clicks"), Input("close-modal", "n_clicks")],
@@ -752,6 +765,8 @@ def toggle_modal(info_clicks, close_clicks, is_open):
     if info_clicks or close_clicks:
         return not is_open
     return is_open
+
+
 
 ################################################################################################
 
@@ -770,7 +785,7 @@ def tab_content_table(df_table_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '80vh'},  
+        style={'height': '65vh'},  
         children=[
         dbc.Row([
             dbc.Col(
@@ -832,17 +847,29 @@ def tab_content_table(df_table_filtered):
 
 def tab_content_points(df_season_league_filtered):
 
+    # Get min matchday where we have non played games 
+    matchday_not_finished = df_season_league_filtered[df_season_league_filtered['game_id'].isnull()]["matchday"].min()
+
+    # Set to 100 if therer was no non played 
+    if pd.isnull(matchday_not_finished):
+        matchday_not_finished = 100
+
+
     df_season_league_filtered = df_season_league_filtered[df_season_league_filtered['game_id'].notnull()].sort_values(by=['team', 'matchday'])
 
+    df_season_league_filtered_finished = df_season_league_filtered[df_season_league_filtered['matchday'] < matchday_not_finished].sort_values(by=['team', 'matchday'])
 
-    max_position = df_season_league_filtered['table_position'].max()
+
+
+    max_position = df_season_league_filtered_finished['table_position'].max()
     middle_position = (max_position+1)//2
-    matchday_max = df_season_league_filtered["matchday"].max()  # Get the maximum matchday
-    season_txt = df_season_league_filtered["season"].max() 
-    league_txt = df_season_league_filtered["league"].max() 
+    matchday_max = df_season_league_filtered_finished["matchday"].max()  # Get the maximum matchday
+
+    season_txt = df_season_league_filtered_finished["season"].max() 
+    league_txt = df_season_league_filtered_finished["league"].max() 
 
 
-    fig_tblpos = px.line(df_season_league_filtered,
+    fig_tblpos = px.line(df_season_league_filtered_finished,
                          title = None ,
                          x='matchday', 
                          y='table_position', 
@@ -850,8 +877,8 @@ def tab_content_points(df_season_league_filtered):
                          markers = True)
 
     # Add annotations for each team's last point
-    for team in df_season_league_filtered["team"].unique():
-        team_data = df_season_league_filtered[df_season_league_filtered["team"] == team]
+    for team in df_season_league_filtered_finished["team"].unique():
+        team_data = df_season_league_filtered_finished[df_season_league_filtered_finished["team"] == team]
         last_row = team_data.iloc[-1]
         fig_tblpos.add_annotation(
             x=matchday_max*1.05, 
@@ -888,7 +915,7 @@ def tab_content_points(df_season_league_filtered):
         tickvals=[1, middle_position, max_position],  # Positions to show on the axis
         ticktext=['1', str(middle_position), str(max_position)],  # Labels for those positions
         tickmode='array',  # Explicitly set tickmode to array
-        tickformat='d',  # No decimal places
+        tickformat='d',  
         showgrid=True,  # Keep grid lines visible
         gridwidth=1,  # Gridline width
         tickangle=0
@@ -897,7 +924,7 @@ def tab_content_points(df_season_league_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '80vh'},  
+        style={'height': '65vh'},  
         children=[
             dbc.Row(
                 style={'height': '100%'},  
@@ -950,7 +977,7 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '80vh'},  # Set the container to full viewport height
+        style={'height': '65vh'},  # Set the container to full viewport height
         children=[
             dbc.Row(
                 style={'height': '100%'},  
@@ -977,142 +1004,56 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
 ################################################################################################
 
-def tab_content_teamstat(df_team_filtered):
+def tab_content_teamstat(selected_team):
 
-    df_teamstat_maxmatch = df_team_filtered[df_team_filtered['matchday'] == df_team_filtered['max_matchday']].reset_index(drop=True)
-    df_teamstat_maxmatch = df_teamstat_maxmatch.sort_values(by='season')
-    df_teamstat_maxmatch['league_tblpos'] = df_teamstat_maxmatch['league'] + '\t' + df_teamstat_maxmatch['table_position'].astype(int).astype(str)
+    df_team_headtohead_filtered = df_team_headtohead[df_team_headtohead['team'] == selected_team]
 
+    df_team_headtohead_filtered = df_team_headtohead_filtered.sort_values(by = 'avg_points', ascending = False)
 
-    # Aggregation with metrics for radar chart
+    df_team_filtered = df_team_games[(df_team_games['team'] == selected_team) & (df_team_games['league'] != 'preseason')]
 
-
-    df_teamstat_seasons = (
-    df_team_filtered[df_team_filtered['matchday'] <= df_team_filtered['max_matchday']]
-    .groupby(['team', 'season'])
-    .agg(
-        avg_points=('points', 'mean'),
-        avg_win=('win', 'mean'),
-        avg_lost=('lost', 'mean'),
-        avg_draw=('draw', 'mean'),
-        avg_scored=('score_team', 'mean'),
-        avg_conceded=('score_opponent', 'mean')
-    )
-    .reset_index()
-    )
-
-    df_teamstat_seasons['norm_avg_scored'] = (df_teamstat_seasons['avg_scored'] - df_teamstat_seasons['avg_scored'].min()) / \
-                                    (df_teamstat_seasons['avg_scored'].max() - df_teamstat_seasons['avg_scored'].min())
-
-    df_teamstat_seasons['norm_avg_conceded'] = (df_teamstat_seasons['avg_conceded'] - df_teamstat_seasons['avg_conceded'].min()) / \
-                                        (df_teamstat_seasons['avg_conceded'].max() - df_teamstat_seasons['avg_conceded'].min())
+    df_team_season_metrics_team = df_team_season_metrics[(df_team_season_metrics['team'] == selected_team) & (df_team_season_metrics['league'] != 'preseason')]
+    df_team_season_metrics_team = df_team_season_metrics_team.sort_values(by='season')
 
 
-    df_teamstat_seasons['norm_avg_win'] = (df_teamstat_seasons['avg_win'] - df_teamstat_seasons['avg_win'].min()) / \
-                                    (df_teamstat_seasons['avg_win'].max() - df_teamstat_seasons['avg_win'].min())
+    current_position = df_team_season_metrics_team[df_team_season_metrics_team['season'] == '2024/25']['table_position'].astype(int).astype(str).values[0]
+    current_points = df_team_season_metrics_team[df_team_season_metrics_team['season'] == '2024/25']['points'].astype(int).astype(str).values[0]
+    current_league = df_team_season_metrics_team[df_team_season_metrics_team['season'] == '2024/25']['league'].values[0]
+    
 
-    df_teamstat_seasons['norm_avg_lost'] = (df_teamstat_seasons['avg_lost'] - df_teamstat_seasons['avg_lost'].min()) / \
-                                        (df_teamstat_seasons['avg_lost'].max() - df_teamstat_seasons['avg_lost'].min())
+    ####### CHART FOR TABLE POSITIONS PER SEASON 
 
-    df_teamstat_seasons['norm_avg_draw'] = (df_teamstat_seasons['avg_draw'] - df_teamstat_seasons['avg_draw'].min()) / \
-                                        (df_teamstat_seasons['avg_draw'].max() - df_teamstat_seasons['avg_draw'].min())
-
-
-
-    ##################### RADAR CHART 
-    metrics_radar = ['norm_avg_scored', 'norm_avg_conceded', 'norm_avg_win', 'norm_avg_lost', 'norm_avg_draw']
-    fig_radar = go.Figure()
-
-    for _, row in df_teamstat_seasons.iterrows():
-        # Ensure the radar chart connects back to the first point
-        r_values = [row[metric] for metric in metrics_radar] + [row[metrics_radar[0]]]
-        theta_values = metrics_radar + [metrics_radar[0]]
-
-        fig_radar.add_trace(go.Scatterpolar(
-            r=r_values,  # Include the first value at the end
-            theta=theta_values,  # Include the first metric at the end
-            fill='none',  # No fill, just lines
-            name=f"{row['season']}"  # Legend for the season
-        ))
-
-    # Update layout
-    fig_radar.update_layout(
-        polar=dict(
-        radialaxis=dict(visible=True, range=[0, 1.2]),  # Adjusted range for normalized metrics
-        ),
-        showlegend=True,
-        title="Radar Chart by Season",
-        legend=dict(
-        orientation="h",  # Horizontal layout
-        yanchor="top",
-        y=-0.2,  # Slightly above the chart
-        xanchor="center",
-        x=0.5   # Center horizontally
-    )
-    )
-
-    fig_radar = apply_darkly_style(fig_radar)
-
-
-
-    # CHART FOR TABLE POSITIONS PER SEASON 
-    fig_area_team = go.Figure()
-
-    # Background area trace (independent of league)
-    fig_area_team.add_trace(go.Scatter(
-        x=df_teamstat_maxmatch['season'],
-        y=[14] * len(df_teamstat_maxmatch),  
-        mode='lines',
-        fill='tonexty',
-        fillcolor='rgba(70, 70, 70, 0.5)',  
-        line=dict(color='rgba(0,0,0,0)'),  
-        showlegend=False
-    ))
-
-    # Define colors for each league
     color_map = {'shl': 'rgba(0, 0, 255, 0.3)', 'allsvenskan': 'rgba(0, 255, 0, 0.3)'}
-    line_color_map = {'shl': 'blue', 'allsvenskan': 'green'}
 
-    # Prepare colors based on league
-    line_colors = [line_color_map[league] for league in df_teamstat_maxmatch['league']]
+    # Prepare the figure
+    fig_team_tblpos = go.Figure()
 
-    # Add single trace with conditional formatting for line and area color
-    fig_area_team.add_trace(
+    # Define a single trace for the data with conditional formatting for the line color and area
+    fig_team_tblpos.add_trace(
         go.Scatter(
-        x=df_teamstat_maxmatch['season'],
-        y=df_teamstat_maxmatch['table_position'],
-        mode='lines+markers+text',
-        # text=[f"Season: {season}<br>League: {league}" for season, league in zip(df_teamstat_maxmatch['season'], df_teamstat_maxmatch['league'])],
-        textposition="top center",
-        fill='tozeroy',  
-        fillcolor='rgba(0, 0, 0, 0)',  
-        line=dict(color='black'),  
-        marker=dict(
-            size=8,
-            color=line_colors,  # Line color changes per league
-        ),
-        text=df_teamstat_maxmatch['league'] + ': ' + df_teamstat_maxmatch['table_position'].astype(int).astype(str) ,  # Tooltip will show league name
-        hoverinfo="text+x+y",
-        showlegend=False
+            x=df_team_season_metrics_team['season'],
+            y=df_team_season_metrics_team['table_position'],
+            mode='lines+markers+text',
+            textposition="top center",
+            fill='tozeroy',  
+            fillcolor='rgba(0, 0, 0, 0)',  
+            line=dict(color='black'),  
+            marker=dict(
+                size=8,
+                color=[color_map[league] for league in df_team_season_metrics_team['league']]  # Apply league color dynamically
+            ),
+            text=df_team_season_metrics_team['league_short'] + ': ' + df_team_season_metrics_team['table_position'].astype(int).astype(str),
+            hoverinfo="text+x+y",
+            showlegend=False
         )
     )
 
+    # Apply the Darkly theme (assuming this is a custom function)
+    fig_team_tblpos = apply_darkly_style(fig_team_tblpos)
 
-    # Format y axis 
-    fig_area_team.update_yaxes(
-        range=[16, -1],
-        tickvals=[1, 14],  
-        autorange=False
-    )
-
-    # Format x axis 
-    fig_area_team.update_xaxes(type='category')
-
-    fig_area_team = apply_darkly_style(fig_area_team)
-
-    # Add manual legend entries using invisible traces
+    # Add manual legend entries using invisible traces (if needed)
     for league, color in color_map.items():
-        fig_area_team.add_trace(go.Scatter(
+        fig_team_tblpos.add_trace(go.Scatter(
             x=[None], y=[None],  # Dummy points
             mode='markers',
             marker=dict(color=color, size=8),
@@ -1121,33 +1062,41 @@ def tab_content_teamstat(df_team_filtered):
 
 
     # Customize layout
-    fig_area_team.update_layout(
-        title='Table Position by Season',
+    fig_team_tblpos.update_layout(
+        title={'text': 'Table Position by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}},
         xaxis_title=None,
         yaxis_title=None,
         showlegend=False,
-        margin=dict(l=50, r=50, t=50, b=50),
+        margin=dict(l=20, r=20, t=30, b=10),
         paper_bgcolor='rgba(35, 38, 45, 1)',
         plot_bgcolor='rgba(70, 70, 70, 0.5)',
         xaxis=dict(
-        range=[-0.5, len(df_teamstat_maxmatch['season'].unique()) - 0.5]
-        )
+            range=[-0.5, len(df_team_season_metrics_team['season'].unique()) - 0.5],
+            type='category'
+        ),
+        yaxis=dict(
+            range=[16, -1],
+            tickvals=[1, 14],
+            autorange=False, 
+            showgrid = False , 
+            showticklabels = False 
+        ),
+       autosize=True
     )
 
-    ##############################
+    ########################################################################################################################
 
-    # Matchday table with icons 
+    # MATCHDAY TABLE  
 
     # Mapping results to colors
     color_map = {'win': 'green', 'lost': 'red', 'draw': 'darkblue'}
     symbol_map = {'win': 'circle', 'lost': 'x', 'draw': 'diamond'}
     df_team_filtered['color'] = df_team_filtered['result'].map(color_map).fillna('gray')
     df_team_filtered['symbol'] = df_team_filtered['result'].map(symbol_map).fillna('circle-open')
-        # Create text for hover information
     df_team_filtered['hover_text'] = (
         df_team_filtered['game'] + '<br>' +
         'Score: ' + df_team_filtered['score'] + '<br>' +
-        'Date: ' + df_team_filtered['date'] + '<br>' +
+        'Date: ' + df_team_filtered['date'].astype(str) + '<br>' +
         'Result: ' + df_team_filtered['result'].fillna('No Result')
     )
 
@@ -1175,61 +1124,186 @@ def tab_content_teamstat(df_team_filtered):
 
     # Add titles 
     fig_teamstat_matches.update_layout(
-        title="Match Results by Season",
+        title={'text': 'Match Results by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}},
         xaxis_title="Matchday",
         yaxis_title=None,
+        autosize=True,
+        margin=dict(l=20, r=20, t=30, b=10),
     )
 
 
+    ################### SPARKLINE CHART FOR METRICS 
+
+    df_team_season_metrics_team_selected = df_team_season_metrics_team[['season','avg_scored', 'avg_conceded', 'avg_points']]
+
+    df_team_season_metrics_team_pivot = df_team_season_metrics_team_selected.set_index('season').transpose().reset_index()
+
+    df_team_season_metrics_team_pivot.columns = ['Metric'] + list(df_team_season_metrics_team_selected['season'])  # Rename columns
+
+    ################### HeadtoHead - Top 
+
+    fig_h2h_top = go.Figure()
+
+    fig_h2h_top = px.bar(
+        df_team_headtohead_filtered.head(10),
+        x='avg_points',
+        y='opponent',
+        orientation='h',  
+        color='avg_points',
+        color_continuous_scale='RdYlGn',
+        range_color=[0.5, 2.5], 
+        title="🥳 Opponents",
+        labels={'opponent': 'Opponent', 'avg_points':  'Ø points'},
+        text='avg_points'
+    )
+
+    fig_h2h_top = apply_darkly_style(fig_h2h_top)
+
+    # Customize layout
+    fig_h2h_top.update_layout(
+        yaxis=dict(categoryorder='total ascending', title=''), 
+        xaxis = dict(title=''),
+        margin=dict(l=10, r=10, t=50, b=30) , 
+        showlegend=False,
+        coloraxis_showscale=False,
+        autosize=True
+    )
+
+    fig_h2h_top.update_traces(
+        texttemplate='%{x:.1f}',
+        showlegend=False
+    )
+
+    
+
+        ################### HeadtoHead - Bot 
+
+    fig_h2h_bot = go.Figure()
+
+    fig_h2h_bot = px.bar(
+        df_team_headtohead_filtered.tail(10),
+        x='avg_points',
+        y='opponent',
+        orientation='h',  
+        color='avg_points',
+        color_continuous_scale='RdYlGn',
+        range_color=[0.5, 2.5], 
+        title="😱 Opponents",
+        labels={'opponent': 'Opponent', 'avg_points': 'Ø points'},
+        text='avg_points'
+    )
+
+    fig_h2h_bot = apply_darkly_style(fig_h2h_bot)
+
+    # Customize layout
+    fig_h2h_bot.update_layout(
+        yaxis=dict(categoryorder='total descending',  title=''), 
+        xaxis = dict(title=''),
+        margin=dict(l=10, r=10, t=50, b=30) , 
+        showlegend=False,
+        coloraxis_showscale=False,
+        autosize=True
+    )
+
+    fig_h2h_bot.update_traces(
+        texttemplate='%{x:.1f}',
+        showlegend=False
+    )
 
 
 
     return dbc.Container(
         fluid=True,  
-        style={'height': '80vh'},  
+        style={'height': '65vh'},  
         children=[ 
             dbc.Row(
+                style={'height': '25vh'},
                 children=[
                     dbc.Col(
                         children=[
                         dbc.Row(
                             html.H1(
-                            "Show some stats about current",
-                        className="plotly-header"
-                            ), className="mb-4", 
+                            selected_team,
+                            className="plotly-header"
+                            ), 
+                        className="mb-1", 
+                        ),
+                        dbc.Row(
+                            html.P(
+                            f"{current_position} in {current_league} ( {current_points} points)",
+                            style={
+                                "fontSize": "24px",  
+                                "fontWeight": "bold", 
+                                "color": "white",       
+                                "margin": "0"          
+                            }
+                            ), 
+                        className="mb-1", 
                         ),
                         ],
-                        width=4
+                        width=7
                     ),  
                     dbc.Col(
                         dcc.Graph(
-                            id='fig_area_team',
-                            figure=fig_area_team,
-                            style={'height': '100%'}
+                            id='fig_team_tblpos',
+                            figure=fig_team_tblpos,
+                            style={'height': '100%',
+                            'padding-left': '3px', 
+                            'padding-right': '3px'
+                            }
                         ),
-                        width=8 ,
-                        style={'height': '250px'}  
+                        width=5 ,
+                        style={'height': '190px',
+                               'padding-left': '3px', 
+                            'padding-right': '3px'}  
                     ),
                 ], 
-                style={'height': '300px'}  
+                className="m-1"
             ),
             dbc.Row(
-                children=[  
+                style={'height': '40vh'},
+                children=[ 
                     dbc.Col(
                         dcc.Graph(
                             id='fig_teamstat_matches',
-                            figure=fig_teamstat_matches
+                            figure=fig_teamstat_matches,
+                            style={'height': '100%'}
                         ),
-                        width=8 
+                        width=7 ,
+                        className="m-0"
                     ),
                     dbc.Col(
-                        dcc.Graph(
-                            id='fig-radar',
-                            figure=fig_radar
-                        ),
-                        width=4 
-                    ),
+                        children=[
+                            dbc.Row(
+                                style={'height': '40vh'},
+                                children=[
+                                    dbc.Col(
+                                        dcc.Graph(
+                                            id='fig_h2h_top',
+                                            figure=fig_h2h_top,
+                                            style={'height': '100%'}
+                                        ),
+                                        width=6,  # Adjust the width as needed
+                                        className="m-0"
+                                    ),
+                                    dbc.Col(
+                                        dcc.Graph(
+                                            id='fig_h2h_bot',
+                                            figure=fig_h2h_bot,
+                                            style={'height': '100%'}
+                                        ),
+                                        width=6,  # Adjust the width as needed
+                                        className="m-0"
+                                    ),
+                                ],
+                                className="m-0"
+                            )
+                        ],
+                        width=5,  
+                        className="m-0"
+                    ) 
                 ]
+                 ,className="m-1"
             )
         ]
 )
@@ -1243,7 +1317,9 @@ def tab_content_teamstat(df_team_filtered):
 ################################################################################################
 
 
-def tab_content_teamcomparison(df_team_season_aggr, metricselector_text):
+def tab_content_teamcomparison(metricselector_text, selected_league):
+
+    df_team_season_aggr = df_team_season_metrics[df_team_season_metrics['league'] == selected_league]
     
     df_team_season_aggr = df_team_season_aggr[['team', 'season', metricselector_text]]
 
@@ -1318,14 +1394,14 @@ def tab_content_teamcomparison(df_team_season_aggr, metricselector_text):
     fig_tbl_teamcomp = apply_darkly_style(fig_tbl_teamcomp)
 
     fig_tbl_teamcomp.update_layout(
-    margin=dict(l=40, r=40, t=10, b=10),  
+    margin=dict(l=5, r=20, t=15, b=10),  
     height=1200, 
     title = None
     )
 
     return dbc.Container(
     fluid=True,
-    style={'height': '100vh'},  # Set the container to full viewport height
+    style={'height': '65vh'},  
     children=[
         dbc.Row(
             style={'height': '100%'},  
