@@ -1,16 +1,15 @@
 import dash
-from dash import dcc, html, State, dash_table, callback_context
+from dash import dcc, html, State, dash_table
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
-import os
+# import os
 import plotly.graph_objs as go
 
 from table_styles import get_table_style
 from chart_styles import apply_darkly_style
-
 
 from google.cloud import bigquery
 

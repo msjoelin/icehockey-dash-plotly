@@ -1,0 +1,9 @@
+dash==2.12.0
+dash-bootstrap-components==1.6.0
+google-cloud-bigquery==3.27.0
+google-cloud-bigquery-storage==2.27.0
+google-api-core==2.24.0
+google-auth==2.37.0
+pandas==2.2.3
+plotly==5.10.0
+numpy==2.1.3
