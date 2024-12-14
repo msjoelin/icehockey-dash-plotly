@@ -3,13 +3,13 @@ from dash import dcc, html, State, dash_table, callback_context
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
+import numpy as np
 import dash_bootstrap_components as dbc
 import os
 import plotly.graph_objs as go
 
 from table_styles import get_table_style
 from chart_styles import apply_darkly_style
-from info_section import create_info_section
 
 
 from google.cloud import bigquery
@@ -19,7 +19,7 @@ key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebd
 # Get data from BQ 
 client = bigquery.Client.from_service_account_json(key_path)
 
-q_tblpos = """
+q_teamgames = """
   SELECT *
   FROM `sportresults-294318.icehockey_plotly_dashboard.swehockey_team_games_dashboard` 
   where 1=1 
@@ -52,17 +52,16 @@ df_matchdays = client.query(q_matchdays).to_dataframe()
 df_teams = client.query(q_teams).to_dataframe()
 df_team_headtohead = client.query(q_team_headtohead).to_dataframe()
 
-
-# df_team_games = client.query(q_tblpos).to_dataframe()
+df_team_games = client.query(q_teamgames).to_dataframe()
 
 # This part to read in locally 
-df_team_games = pd.read_csv("C:/Users/marcu/Documents/github/icehockey-dash-plotly/data/swehockey_team_games_dashboard.csv", low_memory=False)
+# df_team_games = pd.read_csv("C:/Users/marcu/Documents/github/icehockey-dash-plotly/data/swehockey_team_games_dashboard.csv", low_memory=False)
 
 # Convert all object columns to strings, probably not so much needed when getting data from BQ
-for col in df_team_games.select_dtypes(include=['object']).columns:
-    df_team_games[col] = df_team_games[col].astype(str)
+#for col in df_team_games.select_dtypes(include=['object']).columns:
+#    df_team_games[col] = df_team_games[col].astype(str)
 
-df_team_games.loc[:, 'date'] = pd.to_datetime(df_team_games['date'], format='%Y-%m-%d')
+# df_team_games.loc[:, 'date'] = pd.to_datetime(df_team_games['date'], format='%Y-%m-%d')
 
 
 
@@ -99,7 +98,7 @@ style_data_conditional = get_table_style()
 # INITIALIZE DASH APP 
 app = dash.Dash(__name__, 
                 external_stylesheets=[dbc.themes.DARKLY, "https://use.fontawesome.com/releases/v5.15.4/css/all.css"], 
-                title='Icehockey Data Dashboard', 
+                title='🏒 Icehockey Data Dashboard', 
                 suppress_callback_exceptions=True)
 
 
@@ -109,7 +108,7 @@ app.layout = html.Div([
         ### HEADER ROW 
         dbc.Row(
             [
-                dbc.Col(html.H1("Icehockey Data Dashboard"), width=5, className="d-flex align-items-center"), 
+                dbc.Col(html.H1("🏒 Icehockey Data Dashboard"), width=6, className="d-flex align-items-center"), 
 
                 dbc.Col(
                     dbc.Card(
@@ -171,14 +170,15 @@ app.layout = html.Div([
                         "About this dashboard",
                         id="about-button",
                         color="info",
-                        size="lg",
+                        size="sm",
                         className="float-end",
+                        # style={"padding": "4px 8px", "font-size": "0.875rem"}
                     ),
-                    width=3,  
-                    className="d-flex align-items-center justify-content-end pe-3"
+                    width=2,  
+                    className="d-flex justify-content-center align-items-center"
                 ),
             ],
-            className="mb-4",
+            className="mt-2",
         ),
 
         # POPUP FOR INFO BUTTON
@@ -208,18 +208,20 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-4',
+                    active_tab='tab-3',
                     children=[
-                        dbc.Tab(label='Table', tab_id='tab-1'),
-                        dbc.Tab(label='Table Position by Matchday', tab_id='tab-2'),
-                        dbc.Tab(label='Point Distribution', tab_id='tab-3'),
-                        dbc.Tab(label='Team Statistics', tab_id='tab-4'),
-                        dbc.Tab(label='Team Comparison', tab_id='tab-5'),
+                        dbc.Tab(label='🏆 Table', tab_id='tab-1'),
+                        dbc.Tab(label='📈 Table Position by Matchday', tab_id='tab-2'),
+                        dbc.Tab(label='📊 Point Distribution', tab_id='tab-3'),
+                        dbc.Tab(label='📋 Team Statistics', tab_id='tab-4'),
+                        dbc.Tab(label='⚖️ Team Comparison', tab_id='tab-5'),
                     ],
                     className="bg-dark text-white" 
                 )
             ])
-        ]),
+        ]
+        , className="mb-3 mt-3"
+        ),
        
      ### CONTENT HEADER ROW  
      dbc.Container(
@@ -311,6 +313,10 @@ app.layout = html.Div([
                             searchable=True,
                             style={'marginBottom': '10px', 'marginTop': '10px'}
                         ),
+                    dbc.Tooltip(
+                            "Select matchday", 
+                            target="matchday-dropdown", 
+                        ),
                     dcc.Dropdown(
                             id='team-dropdown',
                             options=[{'label': grp, 'value': grp} for grp in df_teams['team'].unique()],
@@ -319,6 +325,10 @@ app.layout = html.Div([
                             className='dash-dropdown',
                             searchable=True,
                             style={'marginBottom': '10px', 'marginTop': '10px'}
+                        ),
+                    dbc.Tooltip(
+                            "Select team", 
+                            target="team-dropdown", 
                         ),
                     html.Div(
                         id='btn-group-metricselectcontainer',
@@ -418,19 +428,19 @@ app.layout = html.Div([
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
         # Show dropdown 1, hide dropdown 2
-        return {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Standings', 'This section contains standings, based on filter selection.'
+        return {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, '🏆 Standings', 'This section contains standings, based on filter selection.'
     elif active_tab == 'tab-2':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, 'Table Position by Matchday', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
+        return {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, '📈 Table Position by Matchday', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
     elif active_tab == 'tab-3':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, 'Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
+        return {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
     elif active_tab == 'tab-4':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, 'Team Statistics', 'This section visualizes team statistics.'
+        return {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, '📋 Team Statistics', 'This section visualizes team statistics.'
     elif active_tab == 'tab-5':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, 'Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
+        return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, '⚖️ Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
     # Default hide all 
     return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a', 'n/a'
 
@@ -703,7 +713,8 @@ def update_table(selected_league, selected_season, selected_matchday, homeaway_b
                                  (df_team_games['season'] == selected_season)]
 
     df_league_matchday_filtered = df_team_games[(df_team_games['league'] == selected_league) & 
-                                                (df_team_games['matchday'] == selected_matchday)]
+                                                (df_team_games['matchday'] == selected_matchday) & 
+                                                (df_team_games['result'].notna())]
         
     return df_table_filtered.to_dict('records'), df_season_league_filtered.to_dict('records'), df_league_matchday_filtered.to_dict('records')
 
@@ -780,9 +791,6 @@ def tab_content_table(df_table_filtered):
 
     df_table_filtered.insert(0, 'table_position', range(1, len(df_table_filtered) + 1))
 
-    #season_txt = df_table_filtered["season"].max() 
-    #league_txt = df_table_filtered["league"].max() 
-
     return dbc.Container(
         fluid=True,
         style={'height': '65vh'},  
@@ -803,9 +811,9 @@ def tab_content_table(df_table_filtered):
                         {"name": "Last 5", "id": "last_5_icons", "presentation": "markdown"}, 
                     ],
                     data=df_table_filtered.to_dict('records'),
-                    page_size=len(df_table_filtered),  # Display all rows
-                    style_table={'overflowX': 'auto', 'width': '100%'},
-                    markdown_options={"html": True},  # Allow HTML rendering in markdown
+                    page_size=len(df_table_filtered),  
+                    style_table={'overflowX': 'auto', 'width': '100%','height': '100%'},
+                    markdown_options={"html": True}, 
                      style_cell={
                          'backgroundColor': '#343a40',
                          'color': 'white',
@@ -814,7 +822,7 @@ def tab_content_table(df_table_filtered):
                      style_header={
                          'backgroundColor': '#495057',
                          'fontWeight': 'bold',
-                         'color': 'white',
+                         'color': 'white'
                      },
                      style_cell_conditional=[
                         {'if': {'column_id': 'table_position'}, 'width': '5%'},
@@ -830,7 +838,7 @@ def tab_content_table(df_table_filtered):
                      style_data_conditional=style_data_conditional,
                      row_selectable=False,
                      cell_selectable=False
-                        )
+                    )
                     ),
                 ]
             )
@@ -952,6 +960,108 @@ def tab_content_points(df_season_league_filtered):
 
 def tab_content_pointdistr(df_league_matchday_filtered):
 
+    # Custom aggregation functions
+    def top_6_limit(series):
+        return series.nlargest(6).min() if len(series) >= 6 else np.nan
+    def top_12_limit(series):
+        return series.nlargest(12).min() if len(series) >= 12 else np.nan
+
+
+    df_stats = (
+        df_league_matchday_filtered.groupby('season')['points_cum']
+        .agg(
+            min='min',
+            max='max',
+            max_min_diff=lambda x: x.max() - x.min(),
+            median='median',
+            std='std',
+            top_6_limit=top_6_limit,
+            top_12_limit = top_12_limit
+        )
+        .reset_index()
+    )
+
+    outlier_styles = []
+
+    for column in ['min', 'max', 'max_min_diff', 'median', 'std', 'top_6_limit', 'top_12_limit']:
+        min_val = df_stats[column].min()
+        max_val = df_stats[column].max()
+
+         # Apply styles for the minimum and maximum values
+        outlier_styles.extend([
+            {
+                'if': {
+                    'column_id': column,
+                    'filter_query': f'{{{column}}} = {min_val}'
+                },
+                'backgroundColor': 'red',
+                'color': 'white'
+            },
+            {
+                'if': {
+                    'column_id': column,
+                    'filter_query': f'{{{column}}} = {max_val}'
+                },
+                'backgroundColor': 'green',
+                'color': 'white'
+            }
+        ])
+
+
+    seasonstats_table = dash_table.DataTable(
+        id='stats-table',
+        data=df_stats.to_dict('records'),  
+        columns=[
+            {"name": "Season", "id": "season"},
+            {"name": "Min", "id": "min", "type": "numeric", "format": {"specifier": "d"}},
+            {"name": "Max", "id": "max", "type": "numeric", "format": {"specifier": "d"}},
+            {"name": "Diff Minmax", "id": "max_min_diff", "type": "numeric", "format": {"specifier": "d"}},
+            {"name": "Median", "id": "median", "type": "numeric", "format": {"specifier": "d"}},
+            {"name": "Std  Dev", "id": "std", "type": "numeric", "format": {"specifier": "d"}},
+            {"name": "Top 6 Limit", "id": "top_6_limit", "type": "numeric", "format": {"specifier": "d"}},
+            {"name": "Top 12 Limit", "id": "top_12_limit", "type": "numeric", "format": {"specifier": "d"}},
+        ],
+        tooltip={
+            "season": {'value': 'The season (e.g., 2021/2022)', 'use_with': 'both'},
+            "min": {'value': 'Number of points of last placed team', 'use_with': 'both'},
+            "max": {'value': 'Number of points of first placed team', 'use_with': 'both'},
+            "max_min_diff": {'value': 'Point difference between first and last team', 'use_with': 'both'},
+            "median": {'value': 'Median number of points', 'use_with': 'both'},
+            "std": {'value': 'Standard deviation of points - indicates how much team points are distributed', 'use_with': 'both'},
+            "top_6_limit": {'value': 'Point of position 6 (e.g. to reach playoff)', 'use_with': 'both'},
+            "top_12_limit": {'value': 'Point of position 12 (e.g. to avoid relegation)', 'use_with': 'both'},
+        },
+
+        css=[{
+                'selector': '.dash-table-tooltip',
+                'rule': 'background-color: grey; font-family: monospace; color: white'
+            }],
+
+        style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%','overflowX': 'auto'},
+        style_header={
+            'backgroundColor': 'rgb(30, 30, 30)',
+            'color': 'white',
+            'fontWeight': 'bold',
+            'textAlign': 'center',
+            'whiteSpace': 'normal',
+            'wordBreak': 'break-word',
+        },
+        style_cell={
+            'textAlign': 'center',
+            'padding': '10px',
+            'backgroundColor': 'rgb(50, 50, 50)',
+            'color': 'white',
+            'fontSize': '14px'
+        },
+        style_data_conditional=[
+            {'if': {'column_id': c}, 'width': '150px'} for c in ['min', 'max', 'max_min_diff', 'median', 'std', 'top_6_limit', 'top_12_limit']
+        ] + outlier_styles,
+        style_as_list_view=True,
+        page_size=12,
+        markdown_options={"html": True}
+    )
+
+
     fig_tblpos_distr = px.box(df_league_matchday_filtered, 
                               x='season', 
                               y='points_cum', 
@@ -962,6 +1072,7 @@ def tab_content_pointdistr(df_league_matchday_filtered):
                             category_orders={'season': sorted(df_league_matchday_filtered['season'].unique())},
                             custom_data=['team'] 
                                 )
+
     fig_tblpos_distr = apply_darkly_style(fig_tblpos_distr)
 
     fig_tblpos_distr.update_yaxes(
@@ -977,18 +1088,28 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '65vh'},  # Set the container to full viewport height
+        style={'height': '65vh'},  
         children=[
             dbc.Row(
                 style={'height': '100%'},  
                 children=[
+                    dbc.Col(
+                        seasonstats_table,
+                        width=5,
+                        className = "my-1"  
+                    ),
+                    # Tooltips for the headers
+                   #  dbc.Tooltip("The season of the data", target="stats-table-0"),
+                   # dbc.Tooltip("The minimum value of the metric", target="stats-table-1"),
+                   # dbc.Tooltip("The maximum value of the metric", target="stats-table-2"),
+                   # dbc.Tooltip("The standard deviation of the metric", target="stats-table-3"),
                     dbc.Col(
                         dcc.Graph(
                             id='fig_tblpos_distr',
                             figure=fig_tblpos_distr,
                             style={'height': '100%'}  
                         ),
-                        width=12,
+                        width=7,
                         style={'height': '100%'}  
                     ),
                 ]
@@ -1217,7 +1338,7 @@ def tab_content_teamstat(selected_team):
         style={'height': '65vh'},  
         children=[ 
             dbc.Row(
-                style={'height': '25vh'},
+                style={'height': '20vh'},
                 children=[
                     dbc.Col(
                         children=[
@@ -1253,7 +1374,7 @@ def tab_content_teamstat(selected_team):
                             }
                         ),
                         width=5 ,
-                        style={'height': '190px',
+                        style={
                                'padding-left': '3px', 
                             'padding-right': '3px'}  
                     ),
@@ -1261,7 +1382,7 @@ def tab_content_teamstat(selected_team):
                 className="m-1"
             ),
             dbc.Row(
-                style={'height': '40vh'},
+                style={'height': '45vh'},
                 children=[ 
                     dbc.Col(
                         dcc.Graph(
@@ -1270,12 +1391,12 @@ def tab_content_teamstat(selected_team):
                             style={'height': '100%'}
                         ),
                         width=7 ,
-                        className="m-0"
+                        className="m-0 mb-2"
                     ),
                     dbc.Col(
                         children=[
                             dbc.Row(
-                                style={'height': '40vh'},
+                                style={'height': '45vh'},
                                 children=[
                                     dbc.Col(
                                         dcc.Graph(
@@ -1296,14 +1417,14 @@ def tab_content_teamstat(selected_team):
                                         className="m-0"
                                     ),
                                 ],
-                                className="m-0"
+                                className="m-0 mb-2"
                             )
                         ],
                         width=5,  
                         className="m-0"
                     ) 
                 ]
-                 ,className="m-1"
+                 ,className="m-1 mt-3"
             )
         ]
 )
