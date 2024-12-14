@@ -5,7 +5,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 import dash_bootstrap_components as dbc
-# import os
+import os
 import plotly.graph_objs as go
 
 from table_styles import get_table_style
@@ -13,7 +13,17 @@ from chart_styles import apply_darkly_style
 
 from google.cloud import bigquery
 
-key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
+# key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
+
+
+# Check if the app is running on Azure
+if os.getenv('WEBSITE_SITE_NAME'):
+    # Running on Azure - use the environment variable for the key
+    key_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')  # Set this in Azure portal
+else:
+    # Running locally - use the local path
+    key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
+
 
 # Get data from BQ 
 client = bigquery.Client.from_service_account_json(key_path)
