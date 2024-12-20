@@ -7,26 +7,36 @@ import numpy as np
 import dash_bootstrap_components as dbc
 import os
 import plotly.graph_objs as go
+import json
+
 
 from table_styles import get_table_style
 from chart_styles import apply_darkly_style
 
 from google.cloud import bigquery
 
-# key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
+
+key_json = os.getenv("BIGQUERY_KEY")
+print(f"BIGQUERY_KEY: {key_json}")  # Debug
+
+try:
+    if key_json:
+        # Decode and write temp key file
+        key_data = json.loads(key_json)
+        with open('temp_key.json', 'w') as f:
+            json.dump(key_data, f)
+        client = bigquery.Client.from_service_account_json('temp_key.json')
+        os.remove('temp_key.json')  # Cleanup
+    else:
+        # Local development path
+        # key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
+        key_path = '/app/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
+        client = bigquery.Client.from_service_account_json(key_path)
+    print("BigQuery client successfully initialized!")
+except Exception as e:
+    print(f"Error initializing BigQuery client: {e}")
 
 
-# Check if the app is running on Azure
-if os.getenv('WEBSITE_SITE_NAME'):
-    # Running on Azure - use the environment variable for the key
-    key_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')  # Set this in Azure portal
-else:
-    # Running locally - use the local path
-    key_path = 'C:/Users/marcu/Documents/servicekeys/sportresults-294318-ffcf7d3aebdf.json'
-
-
-# Get data from BQ 
-client = bigquery.Client.from_service_account_json(key_path)
 
 q_teamgames = """
   SELECT *
@@ -110,6 +120,7 @@ app = dash.Dash(__name__,
                 title='🏒 Icehockey Data Dashboard', 
                 suppress_callback_exceptions=True)
 
+server = app.server
 
 app.layout = html.Div([
     dbc.Container([
