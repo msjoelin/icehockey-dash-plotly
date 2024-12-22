@@ -77,24 +77,19 @@ q_team_headtohead = """
   FROM `sportresults-294318.icehockey_plotly_dashboard.team_headtohead` 
   """
 
+q_team_currentmetrics = """
+  SELECT *
+  FROM `sportresults-294318.icehockey_plotly_dashboard.team_current_metrics` 
+  """
 
 
 
+df_team_games = client.query(q_teamgames).to_dataframe()
 df_team_season_metrics = client.query(q_team_season_metrics).to_dataframe()
 df_matchdays = client.query(q_matchdays).to_dataframe()
 df_teams = client.query(q_teams).to_dataframe()
 df_team_headtohead = client.query(q_team_headtohead).to_dataframe()
-
-df_team_games = client.query(q_teamgames).to_dataframe()
-
-# This part to read in locally 
-# df_team_games = pd.read_csv("C:/Users/marcu/Documents/github/icehockey-dash-plotly/data/swehockey_team_games_dashboard.csv", low_memory=False)
-
-# Convert all object columns to strings, probably not so much needed when getting data from BQ
-#for col in df_team_games.select_dtypes(include=['object']).columns:
-#    df_team_games[col] = df_team_games[col].astype(str)
-
-# df_team_games.loc[:, 'date'] = pd.to_datetime(df_team_games['date'], format='%Y-%m-%d')
+df_team_currentmetrics = client.query(q_team_currentmetrics).to_dataframe()
 
 
 
@@ -242,8 +237,8 @@ app.layout = html.Div([
                 ),
             ],
             id="about-modal",
-            centered=True,  # Center the modal
-            is_open=False,  # Initial state is closed
+            centered=True,  
+            is_open=False, 
         ),
 
         ### TAB ROW
@@ -251,7 +246,7 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-5',
+                    active_tab='tab-4',
                     children=[
                         dbc.Tab(label='🏆 Table', tab_id='tab-1'),
                         dbc.Tab(label='📈 Table Position by Matchday', tab_id='tab-2'),
@@ -1195,7 +1190,6 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 def tab_content_teamstat(selected_team):
 
     df_team_headtohead_filtered = df_team_headtohead[df_team_headtohead['team'] == selected_team]
-
     df_team_headtohead_filtered = df_team_headtohead_filtered.sort_values(by = 'avg_points', ascending = False)
 
     df_team_filtered = df_team_games[(df_team_games['team'] == selected_team) & (df_team_games['league'] != 'preseason')]
@@ -1203,11 +1197,49 @@ def tab_content_teamstat(selected_team):
     df_team_season_metrics_team = df_team_season_metrics[(df_team_season_metrics['team'] == selected_team) & (df_team_season_metrics['league'] != 'preseason')]
     df_team_season_metrics_team = df_team_season_metrics_team.sort_values(by='season')
 
+    # Variables for current standings 
+    df_team_currentmetrics_filtered = df_team_currentmetrics[df_team_currentmetrics['team'] == selected_team]
 
-    current_position = df_team_season_metrics_team[df_team_season_metrics_team['season'] == '2024/25']['table_position'].astype(int).astype(str).values[0]
-    current_points = df_team_season_metrics_team[df_team_season_metrics_team['season'] == '2024/25']['points'].astype(int).astype(str).values[0]
-    current_league = df_team_season_metrics_team[df_team_season_metrics_team['season'] == '2024/25']['league'].values[0]
-    
+    current_position = df_team_currentmetrics_filtered['table_position'].astype(int).astype(str).values[0]
+    current_points = df_team_currentmetrics_filtered['points'].astype(int).astype(str).values[0]
+    current_league = df_team_currentmetrics_filtered['league'].values[0].upper()
+
+
+    last_game = df_team_currentmetrics_filtered['game_previous'].values[0]
+    last_game_date = df_team_currentmetrics_filtered['date_previous'].values[0]
+    last_game_result = df_team_currentmetrics_filtered['result_previous'].values[0]
+    last_game_score = df_team_currentmetrics_filtered['score_previous'].values[0]
+    next_game = df_team_currentmetrics_filtered['game_next'].values[0]
+    next_game_date = df_team_currentmetrics_filtered['date_next'].values[0]
+
+     
+    # Create the layout
+    info_table = html.Div([
+        # Row 1: Last game and date
+        html.Div([
+            html.Div(f"Last Game: ", style={'flex': '1', 'textAlign': 'center', 'color': 'white'}),
+            html.Div(f"{last_game}", style={'fontSize': '18px','flex': '1', 'textAlign': 'center', 'color': 'white'}),
+           #  html.Div(f"{last_game_date}", style={'flex': '1', 'textAlign': 'center', 'color': 'white'})
+        ], style={'marginBottom': '10px', 'marginTop': '5px'}),
+        
+        # Row 2: Last game result and score (bigger size)
+        html.Div([
+            html.Div(f"{last_game_result}  {last_game_score}", style={'fontSize': '20px', 'fontWeight': 'bold', 'color': '#FFD700', 'marginBottom': '5px', 'textAlign': 'center'}),
+        ], style={'textAlign': 'center', 'marginBottom': '10px'}),
+        
+        # Row 3: Next game and date
+        html.Div([
+            html.Div(f"Next Game: {next_game_date} {next_game}", style={'fontSize': '14px', 'flex': '1', 'textAlign': 'center', 'color': 'white'}),
+            # html.Div(f"Next Game Date: {next_game_date}", style={'flex': '1', 'textAlign': 'center', 'color': 'white'})
+        ], style={'display': 'flex', 'flexDirection': 'row'})
+    ], style={
+        'padding': '15px',
+        'border': '1px solid #2a3f5f',
+        'borderRadius': '10px',
+        'backgroundColor': '#1e2130',
+        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)'
+        }
+    )
 
     ####### CHART FOR TABLE POSITIONS PER SEASON 
 
@@ -1429,8 +1461,12 @@ def tab_content_teamstat(selected_team):
                         className="mb-1", 
                         ),
                         ],
-                        width=7
-                    ),  
+                        width=3
+                    ), 
+                    dbc.Col(
+                        info_table,
+                        width=4
+                    ) ,
                     dbc.Col(
                         dcc.Graph(
                             id='fig_team_tblpos',
@@ -1488,10 +1524,10 @@ def tab_content_teamstat(selected_team):
                             )
                         ],
                         width=5,  
-                        className="m-0"
+                        className="mb-2"
                     ) 
                 ]
-                 ,className="m-1 mt-3"
+                 ,className="mt-3 mb-3"
             )
         ]
 )
