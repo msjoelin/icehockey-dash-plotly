@@ -246,7 +246,7 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-4',
+                    active_tab='tab-5',
                     children=[
                         dbc.Tab(label='🏆 Table', tab_id='tab-1'),
                         dbc.Tab(label='📈 Table Position by Matchday', tab_id='tab-2'),
@@ -1114,7 +1114,9 @@ def tab_content_pointdistr(df_league_matchday_filtered):
         ] + outlier_styles,
         style_as_list_view=True,
         page_size=12,
-        markdown_options={"html": True}
+        markdown_options={"html": True},
+        row_selectable=False,
+        cell_selectable=False
     )
 
 
@@ -1562,49 +1564,64 @@ def tab_content_teamcomparison(metricselector_text, selected_league):
                 return f"{value:.1f}"  # One decimal
         return ""  # For non-numeric values (like 'team')
 
+
     # Apply formatting to the dataframe before passing it to the DataTable
     df_team_season_aggr_pivot_formatted = df_team_season_aggr_pivot.copy()
     for col in df_team_season_aggr_pivot_formatted.columns[1:]:  # Skip the 'team' column
         df_team_season_aggr_pivot_formatted[col] = df_team_season_aggr_pivot_formatted[col].apply(lambda x: format_value(x, metricselector_text))
 
+   
+    def discrete_background_color_bins(df, n_bins=5, columns='all'):
+        import colorlover
+        bounds = [i * (1.0 / n_bins) for i in range(n_bins + 1)]
+        if columns == 'all':
+            if 'id' in df:
+                df_numeric_columns = df.select_dtypes('number').drop(['id'], axis=1)
+            else:
+                df_numeric_columns = df.select_dtypes('number')
+        else:
+            df_numeric_columns = df[columns]
 
+        df_numeric_columns = df_numeric_columns.apply(pd.to_numeric, errors='coerce')  
+        df_max = df_numeric_columns.max().max()
 
-    # Ensure only numeric columns are processed
-    numeric_columns = [
-        col for col in df_team_season_aggr_pivot_formatted.columns[1:]  # Skip the first column
-        if pd.api.types.is_numeric_dtype(df_team_season_aggr_pivot_formatted[col])
-    ]
-    # Define conditional formatting rules
-    outlier_styles = []
+        if "spectators" in metricselector_text:
+            df_min = 4000
+        else:
+            df_min = df_numeric_columns.min().min()
 
-    for col in numeric_columns:
-        # Get the max and min of the column
-        max_val = df_team_season_aggr_pivot_formatted[col].max()
-        min_val = df_team_season_aggr_pivot_formatted[col].min()
+        ranges = [
+            ((df_max - df_min) * i) + df_min
+            for i in bounds
+        ]
+        styles = []
+        for i in range(1, len(bounds)):
+            min_bound = ranges[i - 1]
+            max_bound = ranges[i]
+            backgroundColor = colorlover.scales[str(n_bins)]['seq']['YlGn'][i - 1]
+            if i <=2:
+                color = 'black'
+            else:
+                color = 'white' if i > len(bounds) / 2. else 'inherit'
 
+            for column in df_numeric_columns:
+                styles.append({
+                    'if': {
+                        'filter_query': (
+                            '{{{column}}} >= {min_bound}' +
+                            (' && {{{column}}} < {max_bound}' if (i < len(bounds) - 1) else '')
+                        ).format(column=column, min_bound=min_bound, max_bound=max_bound),
+                        'column_id': column
+                    },
+                    'backgroundColor': backgroundColor,
+                    'color': color
+                })
 
+        return (styles)
 
-        # Apply styles for the minimum and maximum values
-        outlier_styles.extend([
-            {
-                'if': {
-                    'column_id': col,
-                    'filter_query': f'{{{col}}} = {min_val}'
-                },
-                'backgroundColor': 'red',
-                'color': 'white'
-            },
-            {
-                'if': {
-                    'column_id': col,
-                    'filter_query': f'{{{col}}} = {max_val}'
-                },
-                'backgroundColor': 'green',
-                'color': 'white'
-            }
-        ])
+    (styles) = discrete_background_color_bins(df_team_season_aggr_pivot)
 
-
+    
     # Define the DataTable with your data
     seasonstats_table = dash_table.DataTable(
         id='team-season-stats',
@@ -1637,10 +1654,11 @@ def tab_content_teamcomparison(metricselector_text, selected_league):
         },
         sort_action='native',  
         sort_mode='single',    
-        #sort_by=[{'column_id': df_team_season_aggr_pivot_formatted.columns[1], 'direction': 'asc'}],  # Example: sort by first season column
         style_as_list_view=True,
         markdown_options={"html": True},
-        style_data_conditional=outlier_styles,
+        style_data_conditional=styles,
+        row_selectable=False,
+        cell_selectable=False
     )
 
     return dbc.Container(
