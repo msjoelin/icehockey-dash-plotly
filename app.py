@@ -9,8 +9,6 @@ import os
 import plotly.graph_objs as go
 import json
 import base64
-import locale
-
 
 from table_styles import get_table_style
 from chart_styles import apply_darkly_style
@@ -138,73 +136,16 @@ app.layout = html.Div([
         dbc.Row(
             [
                 dbc.Col(html.H1("🏒 Icehockey Data Dashboard"), width=6, className="d-flex align-items-center"), 
-
-                dbc.Col(
-                    dbc.Card(
-                        id="league_card",
-                        children=[
-                            dbc.CardBody(
-                                children=[
-                                    html.Div(
-                                        children=[
-                                            dcc.Dropdown(
-                                                id='league-dropdown',
-                                                options=[{'label': grp, 'value': grp} for grp in df_team_games['league'].unique()],
-                                                value='shl',  
-                                                className='dash-dropdown'
-                                            ),
-                                            dbc.Tooltip(
-                                                "Select a league", 
-                                                target="league-dropdown", 
-                                            ),
-                                        ],
-                                    ),
-                                ]
-                            ),
-                        ]
-                    ),
-                    width=2
-                ),
-
-                dbc.Col(
-                    dbc.Card(
-                        id="season_card",
-                        children=[
-                            dbc.CardBody(
-                                children=[
-                                    html.Div(
-                                        children=[
-                                            dcc.Dropdown(
-                                                id='season-dropdown',
-                                                options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
-                                                value='2024/25',  
-                                                className='dash-dropdown'
-                                            ),
-                                            dbc.Tooltip(
-                                                "Select a season", 
-                                                target="season-dropdown", 
-                                            ),
-                                        ],
-                                    ),
-                                ]
-                            ),
-                        ]
-                    ),
-                    width=2
-                ),
-
-
                 dbc.Col(
                     dbc.Button(
                         "About this dashboard",
                         id="about-button",
                         color="info",
                         size="sm",
-                        className="float-end",
-                        # style={"padding": "4px 8px", "font-size": "0.875rem"}
+                        style={"rightMargin": "20px"}
                     ),
-                    width=2,  
-                    className="d-flex justify-content-center align-items-center"
+                    width=6,  
+                    className="d-flex justify-content-end align-items-center"
                 ),
             ],
             className="mt-2",
@@ -246,10 +187,10 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-5',
+                    active_tab='tab-1',
                     children=[
                         dbc.Tab(label='🏆 Table', tab_id='tab-1'),
-                        dbc.Tab(label='📈 Table Position by Matchday', tab_id='tab-2'),
+                        dbc.Tab(label='📈 Matchday Table Position', tab_id='tab-2'),
                         dbc.Tab(label='📊 Point Distribution', tab_id='tab-3'),
                         dbc.Tab(label='📋 Team Statistics', tab_id='tab-4'),
                         dbc.Tab(label='⚖️ Team Comparison', tab_id='tab-5'),
@@ -271,7 +212,7 @@ app.layout = html.Div([
                 dbc.Row(
                     [
                         dbc.Col(
-                            html.H2("Your Title Here", id="tab-title", style={"textAlign": "left", "margin": "10px"}),
+                            html.H2("Your Title Here", id="tab-title", style={"textAlign": "left", "margin": "10px", 'marginRight': '0px', "fontSize":"28px"}), 
                             width="auto"
                         ),
                         dbc.Col(
@@ -281,130 +222,146 @@ app.layout = html.Div([
                                 className="btn-sm btn-info float-end",
                                 n_clicks=0,
                                 style={
-                                    "font-size": "1.7rem",
+                                    "font-size": "1.2rem",
                                     "color": "white",
                                     "background-color": "transparent",
-                                    "border": "none"
+                                    "border": "none",
+                                    'marginRight': '0px',  
+                                    'marginLeft': '5px' 
                                 },
                             ),
                             width="auto"
                         ),
                     ],
                     className="g-0",  
-                ),
-                width=6  
+                    ),
+                    width=4  
                 ),
             
-                # Relevant Filter Section  
-                dbc.Col(
+            # Relevant Filter Section  
+            dbc.Col(
+                html.Div(
                     [
-                       
-                    html.Div(
-                        id='container_table_filters',
-                        children=[
-                            dbc.Row(
-                                [   
-                                    dbc.Col(
-                                        dbc.ButtonGroup(
-                                            [
-                                                dbc.Button("Total", id="btn-total", n_clicks=0, color="primary", outline=True, value='total', style={'width': '100%', 'margin': '5px'}),
-                                                dbc.Button("Home", id="btn-home", n_clicks=0, color="primary", outline=True, value='home', style={'width': '100%', 'margin': '5px'}),
-                                                dbc.Button("Away", id="btn-away", n_clicks=0, color="primary", outline=True, value='away', style={'width': '100%', 'margin': '5px'}),
-                                            ],
-                                            id='btn-standings-homeaway',
-                                            vertical=False,
-                                            size="md",
-                                            className="m-3",
-                                            style={'width': '100%'}  # Fill the entire column width
-                                        ),
-                                        width=6  # Takes up half of the row's space
-                                    ),
-                                    dbc.Col(
-                                        dbc.ButtonGroup(
-                                            [
-                                                dbc.Button("All", id="btn-all", n_clicks=0, color="primary", outline=True, value='all', style={'flex': '1', 'margin': '5px'}),
-                                                dbc.Button("Last 5 games", id="btn-last5", n_clicks=0, color="primary", outline=True, value='last5', style={'flex': '1', 'margin': '5px'}),
-                                                dbc.Button("Last 10 games", id="btn-last10", n_clicks=0, color="primary", outline=True, value='last10', style={'flex': '1', 'margin': '5px'}),
-                                            ],
-                                            id='btn-last-games',
-                                            vertical=False,
-                                            size="md",
-                                            className="m-3",
-                                            style={'width': '100%', 'display': 'flex'} 
-                                        ),
-                                        width=6  
-                                    ),
-                                ],
-                                justify="start",  
-                                align="center",
+                    
+                            dcc.Dropdown(
+                                id='league-dropdown',
+                                options=[{'label': grp, 'value': grp} for grp in df_team_games['league'].unique()],
+                                value='shl',
+                                className='m-1',
+                               # style={
+                               #      'width': '150px',  
+                               #      
+                               #  }
                             ),
-                        ],
-                        style={"display": "none"}  
-                    ),
+                            dbc.Tooltip("Select a league",  target="league-dropdown", ),
+                            dcc.Dropdown(
+                                id='season-dropdown',
+                                options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
+                                value='2024/25',
+                                className='m-1',
+                              #   style={
+                              #       'width': '150px',
+                              #   }
+                            ),
+                            # dbc.Tooltip("Select a season", target="season-dropdown"),       
+                            # Home/Away Button 
+                            dbc.ButtonGroup(
+                                [
+                                    dbc.Button("Total", id="btn-total", n_clicks=0, color="primary", outline=True, value='total', style={'width': '100%', 'margin': '5px'}),
+                                    dbc.Button("Home", id="btn-home", n_clicks=0, color="primary", outline=True, value='home', style={'width': '100%', 'margin': '5px'}),
+                                    dbc.Button("Away", id="btn-away", n_clicks=0, color="primary", outline=True, value='away', style={'width': '100%', 'margin': '5px'}),
+                                ],
+                                id='btn-standings-homeaway',
+                                vertical=False,
+                                size="md",
+                                className="m-3",
+                                style={
+                                    'marginBottom': '10px', 
+                                    'marginTop': '10px',
+                                    'width': 'auto',  
+                                    'marginLeft': '0px',  
+                                    'marginRight': 'auto'  ,
+                                    
+                                    }
+                            ),
+                                 
+                            dbc.ButtonGroup(
+                                [
+                                    dbc.Button("All", id="btn-all", n_clicks=0, color="primary", outline=True, value='all', style={'width': '100%', 'margin': '5px'}),
+                                    dbc.Button("Last 5", id="btn-last5", n_clicks=0, color="primary", outline=True, value='last5', style={'width': '100%', 'margin': '5px'}),
+                                    dbc.Button("Last 10", id="btn-last10", n_clicks=0, color="primary", outline=True, value='last10', style={'width': '100%', 'margin': '5px'}),
+                                ],
+                                id='btn-last-games',
+                                vertical=False,
+                                size="md",
+                                className="m-3",
+                                style={
+                                    'marginBottom': '10px', 
+                                    'marginTop': '10px',
+                                    'width': 'auto',  
+                                    'marginLeft': '0px',  
+                                    'marginRight': 'auto'  ,
+                                    'display': 'flex', 'justify-content': 'flex-start'
+                                    }
+                            
+                        ),
 
                     dcc.Dropdown(
                             id='matchday-dropdown',
                             options=[{'label': grp, 'value': grp} for grp in df_matchdays['matchday'].unique()],
                             value=52,
                             placeholder='Select matchday',
-                            className='dash-dropdown',
+                            className='m-1',
                             searchable=True,
-                            style={
-                                'marginBottom': '10px', 
-                                'marginTop': '10px',
-                                'width': '300px',  
-                                'marginLeft': '0px',  
-                                'marginRight': 'auto'  
-                                }
+                    #        style={
+                    #            'marginBottom': '10px', 
+                    #            'marginTop': '10px',
+                    #            'width': '200px',  
+                    #            'marginLeft': '0px',  
+                    #            'marginRight': 'auto' ,
+                    #            'display': 'flex', 'justify-content': 'flex-start'
+                    #            }
                             ),
-                    dbc.Tooltip(
-                            "Select matchday", 
-                            target="matchday-dropdown", 
-                        ),
+                    dbc.Tooltip("Select matchday", target="matchday-dropdown",),
+
                     dcc.Dropdown(
                             id='team-dropdown',
                             options=[{'label': grp, 'value': grp} for grp in df_teams['team'].unique()],
                             value='Leksands IF',
                             placeholder='Select team',
-                            className='dash-dropdown',
+                            className='m-1',
                             searchable=True,
-                            style={
-                                'marginBottom': '10px', 
-                                'marginTop': '10px',
-                                'width': '300px',  
-                                'marginLeft': '0px',  
-                                'marginRight': 'auto' 
-                                }
+                    #        style={
+                    #            'marginBottom': '10px', 
+                    #            'marginTop': '10px',
+                    #            'width': '300px',  
+                    #            'marginLeft': '0px',  
+                    #            'marginRight': 'auto' ,
+                    #            'display': 'flex', 'justify-content': 'flex-start'
+                    #            }
                         ),
-                    dbc.Tooltip(
-                            "Select team", 
-                            target="team-dropdown", 
-                        ),
-                    html.Div(
-                        id='btn-group-metricselectcontainer',
-                        children=[
+                    dbc.Tooltip("Select team", target="team-dropdown"),
 
                             dbc.ButtonGroup(
                                 [
                                     dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='avg_points', style={'margin': '5px'}),
                                     dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value='avg_scored', style={'margin': '5px'}),
                                     dbc.Button("Conceded", id="btn-conceded", n_clicks=0, color="primary", outline=True, value='avg_conceded', style={'margin': '5px'}),
-                                    dbc.Button("Spectators Home", id="btn-spectators-home", n_clicks=0, color="primary", outline=True, value='avg_spectators', style={'margin': '5px'}),
-                                    dbc.Button("Spectators Away", id="btn-spectators-away", n_clicks=0, color="primary", outline=True, value='avg_spectators_away', style={'margin': '5px'}),
-                                    dbc.Button("Points Home", id="btn-points-home", n_clicks=0, color="primary", outline=True, value='avg_points_home', style={'margin': '5px'}),
-                                    dbc.Button("Points Away", id="btn-points-away", n_clicks=0, color="primary", outline=True, value='avg_points_away', style={'margin': '5px'}),
+                                    dbc.Button("Spectators (H)", id="btn-spectators-home", n_clicks=0, color="primary", outline=True, value='avg_spectators', style={'margin': '5px'}),
+                                    dbc.Button("Spectators (A)", id="btn-spectators-away", n_clicks=0, color="primary", outline=True, value='avg_spectators_away', style={'margin': '5px'}),
+                                    dbc.Button("Points (H)", id="btn-points-home", n_clicks=0, color="primary", outline=True, value='avg_points_home', style={'margin': '5px'}),
+                                    dbc.Button("Points (A)", id="btn-points-away", n_clicks=0, color="primary", outline=True, value='avg_points_away', style={'margin': '5px'}),
                                 ],
                                 id='btn-group-metricselector',
                                 vertical=False,
                                 size="md",
-                                className="mb-3",
-                                style={'display': 'flex', 'width': '100%', 'justify-content': 'space-between'}
+                                className="m-3 mr-1",
+                                style={'display': 'flex', 'width': 'auto', 'justify-content': 'flex-start'}
                             )
-                        ],
-                        style={"display": "none"}
+                            ],
+                    style={'display': 'flex', 'flexDirection': 'row', 'flexWrap': 'wrap', 'justifyContent': 'flex-start', 'align-items': 'flex-start'}
                     ),
-                    ],
-                    width=6  
+                    width=8  
                 ),
                 
             ],
@@ -465,10 +422,13 @@ app.layout = html.Div([
 
 @app.callback(
     [
-        Output('container_table_filters', 'style'),
+        Output('season-dropdown', 'className'),
+        Output('league-dropdown', 'className'),
+        Output('btn-standings-homeaway', 'className'),
+        Output('btn-last-games', 'className'),
         Output('matchday-dropdown', 'className'),
         Output('team-dropdown', 'className'), 
-        Output('btn-group-metricselectcontainer', 'style'),
+        Output('btn-group-metricselector', 'className'),
         Output('tab-title', 'children'), 
         Output('info-toggle-collapse', 'children')
 
@@ -478,21 +438,21 @@ app.layout = html.Div([
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
         # Show dropdown 1, hide dropdown 2
-        return {"display": "block"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, '🏆 Standings', 'This section contains standings, based on filter selection.'
+        return 'm-1 custom-dropdown' , 'm-1 custom-dropdown',  'm-1', 'm-1', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '🏆 Standings', 'This section contains standings, based on filter selection.'
     elif active_tab == 'tab-2':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown','hidden-dropdown', {"display": "none"}, '📈 Table Position by Matchday', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
+        return 'm-1 custom-dropdown', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '📈 Matchday Table Position', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
     elif active_tab == 'tab-3':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'dash-dropdown','hidden-dropdown',  {"display": "none"}, '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
+        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none',  'm-1 d-none', '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
     elif active_tab == 'tab-4':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown', 'dash-dropdown',   {"display": "none"}, '📋 Team Statistics', 'This section visualizes team statistics.'
+        return 'd-none', 'd-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown',   'm-1 d-none', '📋 Team Statistics', 'This section visualizes team statistics.'
     elif active_tab == 'tab-5':
         # Show dropdown 2, hide dropdown 1
-        return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "block"}, '⚖️ Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
+        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none',   'm-1 mr-1', '⚖️ Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
     # Default hide all 
-    return {"display": "none"}, 'hidden-dropdown', 'hidden-dropdown',   {"display": "none"}, 'n/a', 'n/a'
+    return 'm-1 d-none', 'm-1', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none',   'm-1 d-none', 'n/a', 'n/a'
 
 
 ## CALLBACK: Home or Away Selector in Tab 1
