@@ -1338,13 +1338,13 @@ def tab_content_teamstat(selected_team):
             symbol=df_team_filtered['symbol'],
             size=10
         ),
-        text=df_team_filtered['hover_text'],  # Display the result on hover
+        text=df_team_filtered['hover_text'],  
         hoverinfo='text'
     ))
 
     fig_teamstat_matches = apply_darkly_style(fig_teamstat_matches)
 
-    # Add titles 
+     
     fig_teamstat_matches.update_layout(
         title={'text': 'Match Results by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}},
         xaxis_title="Matchday",
@@ -1554,12 +1554,11 @@ def tab_content_teamcomparison(metricselector_text, selected_league):
     df_team_season_aggr_pivot.columns.name = None 
 
     # Fix format, depending on what metric is selected. If spectators, we remove decimal but make it a thousand separated 
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     # Format function based on conditions
     def format_value(value, metricselector_text):
         if isinstance(value, (int, float)) and not np.isnan(value):  
             if "spectators" in metricselector_text:
-                return locale.format_string("%d", value, grouping=True)  
+                return f"{int(value):,}"  
             else:
                 return f"{value:.1f}"  # One decimal
         return ""  # For non-numeric values (like 'team')

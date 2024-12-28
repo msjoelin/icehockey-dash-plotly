@@ -12,3 +12,4 @@ plotly==5.10.0
 numpy==1.25.0
 gunicorn==20.1.0
 db_dtypes
+colorlover==0.3.0
