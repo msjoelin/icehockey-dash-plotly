@@ -101,24 +101,6 @@ def map_results_to_icons(results):
         'ot win': '<span class="square-icon ot-win">T</span>',
         'ot loss': '<span class="square-icon ot-loss">T</span>',
     }
-
-    #icon_map = {
-    #    'win': '<i class="fas fa-check-circle" style="color: green;"></i>',
-    #    'draw': '<i class="fas fa-minus-circle" style="color: darkblue;"></i>',
-    #    'lost': '<i class="fas fa-times-circle" style="color: red;"></i>',
-    #    'ot win': (
-    #        '<span style="position: relative; display: inline-block;">'
-    #        '<i class="fas fa-minus-circle" style="color: darkblue;"></i>'
-    #        '<span style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: green; transform: translateY(-50%);"></span>'
-    #        '</span>'
-    #    ),  
-    #    'ot loss': (
-    #        '<span style="position: relative; display: inline-block;">'
-    #        '<i class="fas fa-minus-circle" style="color: darkblue;"></i>'
-    #        '<span style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: red; transform: translateY(-50%);"></span>'
-    #        '</span>'
-    #    ), 
-    #}
   
     if not results:
         return ''
@@ -128,9 +110,6 @@ def map_results_to_icons(results):
 
     for result in results_list[:]:
         icons.append(icon_map.get(result, ''))  # Default to empty if not found
-    
-    # last_icon = f'<span class="rounded-icon">{icon_map.get(results_list[-1], "")}</span>'
-    # icons.append(last_icon)
 
     return ' '.join(icons)
 
@@ -142,7 +121,7 @@ df_team_games['result_icon'] = df_team_games['result_details'].apply(map_results
 # INITIALIZE DASH APP 
 app = dash.Dash(__name__, 
                 external_stylesheets=[dbc.themes.DARKLY, "https://use.fontawesome.com/releases/v5.15.4/css/all.css"], 
-                title='🏒 Icehockey Data Dashboard', 
+                title='🏒 Hockey Insights Hub', 
                 suppress_callback_exceptions=True)
 
 server = app.server
@@ -153,7 +132,7 @@ app.layout = html.Div([
         ### HEADER ROW 
         dbc.Row(
             [
-                dbc.Col(html.H1("🏒 Icehockey Data Dashboard"), width=6, className="d-flex align-items-center"), 
+                dbc.Col(html.H1("🏒 Hockey Insights Hub"), width=6, className="d-flex align-items-center"), 
                 dbc.Col(
                     dbc.Button(
                         "About this dashboard",
@@ -173,12 +152,14 @@ app.layout = html.Div([
         # MODAL FOR INFO BUTTON
         dbc.Modal(
             [
-                dbc.ModalHeader(dbc.ModalTitle("About Icehockey Data Dashboard")),
+                dbc.ModalHeader(dbc.ModalTitle("About Hockey Insights Hub")),
                 dbc.ModalBody(
                     html.Div([
                         html.P("Hey there! 👋 This dashboard is all about diving into 🏒 ice hockey stats and having some fun with it."),
+                        html.Br(),
                         html.P("You’ll find data from Sweden’s top two leagues, SHL and HockeyAllsvenskan, updated daily 📅 to keep things fresh."),
                         html.P("No promises that it’s perfect—so if you spot something odd, just roll with it. This is for fun, after all! 🎉"),
+                        html.Br(),
                         html.P([
                             "Got questions, ideas, or just want to say hi? 💡 Shoot me an email at ",
                             html.A("marcussjolin89@gmail.com", href="mailto:marcussjolin89@gmail.com", style={"textDecoration": "none", "color": "#007bff"}),
@@ -198,6 +179,7 @@ app.layout = html.Div([
             id="about-modal",
             centered=True,  
             is_open=False, 
+          #  style={"maxWidth": "60%", "marginLeft": "auto", "marginRight": "auto"}
         ),
 
         ### TAB ROW
@@ -266,6 +248,7 @@ app.layout = html.Div([
                                 options=[{'label': grp, 'value': grp} for grp in df_team_games['league'].unique()],
                                 value='shl',
                                 className='m-1',
+                                clearable=False
                             ),
                             dbc.Tooltip("Select a league",  target="league-dropdown", ),
                             dcc.Dropdown(
@@ -273,6 +256,7 @@ app.layout = html.Div([
                                 options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
                                 value='2024/25',
                                 className='m-1',
+                                clearable=False
                             ),
                             dbc.Tooltip("Select a season", target="season-dropdown"),       
                             # Home/Away Button 
@@ -321,8 +305,22 @@ app.layout = html.Div([
                             placeholder='Select matchday',
                             className='m-1',
                             searchable=True,
+                            clearable=False
                             ),
                     dbc.Tooltip("Select matchday", target="matchday-dropdown",),
+
+                    dcc.Dropdown(
+                            id='matchdaymetric-dropdown',
+                            options=[
+                                {'label': 'Table Position', 'value': 'table_position'},
+                                {'label': 'Average Points', 'value': 'avg_points'}
+                            ],
+                            value='table_position',
+                            placeholder='Select metric',
+                            className='m-1',
+                            clearable=False
+                            ),
+                    dbc.Tooltip("Select metric", target="matchdaymetric-dropdown",),
 
                     dcc.Dropdown(
                             id='team-dropdown',
@@ -331,6 +329,7 @@ app.layout = html.Div([
                             placeholder='Select team',
                             className='m-1',
                             searchable=True,
+                            clearable=False
                         ),
                     dbc.Tooltip("Select team", target="team-dropdown"),
 
@@ -417,6 +416,7 @@ app.layout = html.Div([
         Output('btn-standings-homeaway', 'className'),
         Output('btn-last-games', 'className'),
         Output('matchday-dropdown', 'className'),
+        Output('matchdaymetric-dropdown', 'className'),
         Output('team-dropdown', 'className'), 
         Output('btn-group-metricselector', 'className'),
         Output('tab-title', 'children'), 
@@ -425,24 +425,24 @@ app.layout = html.Div([
      ],  
     [Input('tabs', 'active_tab')]
 )
+
 def update_dropdown_visibility(active_tab):
     if active_tab == 'tab-1':
-        # Show dropdown 1, hide dropdown 2
-        return 'm-1 custom-dropdown' , 'm-1 custom-dropdown',  'm-1', 'm-1', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '🏆 Standings', 'This section contains standings, based on filter selection.'
+        return 'm-1 custom-dropdown' , 'm-1 custom-dropdown',  'm-1', 'm-1', 'm-1 d-none', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '🏆 Standings', 'This section contains standings, based on filter selection.'
+
     elif active_tab == 'tab-2':
-        # Show dropdown 2, hide dropdown 1
-        return 'm-1 custom-dropdown', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '📈 Matchday Table Position', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
+        return 'm-1 custom-dropdown', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none', 'm-1 d-none', '📈 Matchday Table Position', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
+
     elif active_tab == 'tab-3':
-        # Show dropdown 2, hide dropdown 1
-        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none',  'm-1 d-none', '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
+        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none', 'm-1 d-none',  'm-1 d-none', '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
+
     elif active_tab == 'tab-4':
-        # Show dropdown 2, hide dropdown 1
-        return 'd-none', 'd-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown',   'm-1 d-none', '📋 Team Statistics', 'This section visualizes team statistics.'
+        return 'd-none', 'd-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown',   'm-1 d-none', '📋 Team Statistics', 'This section visualizes team statistics.'
+
     elif active_tab == 'tab-5':
-        # Show dropdown 2, hide dropdown 1
-        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none',   'm-1 mr-1', '⚖️ Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
+        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none','m-1 d-none',   'm-1 mr-1', '⚖️ Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
     # Default hide all 
-    return 'm-1 d-none', 'm-1', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none',   'm-1 d-none', 'n/a', 'n/a'
+    return 'm-1 d-none', 'm-1', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none',   'm-1 d-none', 'n/a', 'n/a'
 
 
 ## CALLBACK: Home or Away Selector in Tab 1
@@ -735,11 +735,12 @@ def update_table(selected_league, selected_season, selected_matchday, homeaway_b
         Input('league-matchday-filtered', 'data'), 
         Input('metricselector-button-text', 'data'),
         Input('team-dropdown', 'value'),
-        Input('league-dropdown', 'value')
+        Input('league-dropdown', 'value'),
+        Input('matchdaymetric-dropdown','value')
         ]
 )
 
-def render_content(selected_tab, table_filtered, season_league_filtered, league_matchday_filtered,  metricselector_text, selected_team, selected_league):
+def render_content(selected_tab, table_filtered, season_league_filtered, league_matchday_filtered,  metricselector_text, selected_team, selected_league, selected_matchdaymetric):
     
     df_table_filtered = pd.DataFrame(table_filtered)
 
@@ -751,7 +752,7 @@ def render_content(selected_tab, table_filtered, season_league_filtered, league_
     if selected_tab == 'tab-1':
         return tab_content_table(df_table_filtered)  
     elif selected_tab == 'tab-2':
-        return tab_content_points(df_season_league_filtered)
+        return tab_content_points(df_season_league_filtered, selected_matchdaymetric)
     elif selected_tab == 'tab-3':
         return tab_content_pointdistr(df_league_matchday_filtered)
     elif selected_tab == 'tab-4':
@@ -817,6 +818,21 @@ def tab_content_table(df_table_filtered):
                         {"name": "Ø against", "id": "avg_conceded"},
                         {"name": "Ø goals", "id": "avg_goals_game"}
                     ],
+                    tooltip={
+                                "games": {'value': 'Games Played', 'use_with': 'both'},
+                                "goal_difference_txt": {'value': 'Goal difference', 'use_with': 'both'},
+                                "win": {'value': 'Number of games with Win', 'use_with': 'both'},
+                                "ot_win": {'value': 'Number of games with OverTime Win', 'use_with': 'both'},
+                                "ot_loss": {'value': 'Number of games with OverTime Loss', 'use_with': 'both'},
+                                "lost": {'value': 'Number of games with Loss', 'use_with': 'both'},
+                                "last_5_icons": {'value': 'Last 5 game result', 'use_with': 'both'}
+                            },
+
+                    css=[{
+                            'selector': '.dash-table-tooltip',
+                            'rule': 'background-color: grey; font-family: monospace; color: white'
+                        }],
+                        
                     data=df_table_filtered.to_dict('records'),
                     page_size=len(df_table_filtered),  
                     style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%','overflowX': 'auto'},
@@ -894,12 +910,12 @@ def tab_content_table(df_table_filtered):
 ################################################################################################
 
 
-def tab_content_points(df_season_league_filtered):
+def tab_content_points(df_season_league_filtered, selected_matchdaymetric):
 
     # Get min matchday where we have non played games 
     matchday_not_finished = df_season_league_filtered[df_season_league_filtered['game_id'].isnull()]["matchday"].min()
 
-    # Set to 100 if therer was no non played 
+    # Set to 100 if there was no non played 
     if pd.isnull(matchday_not_finished):
         matchday_not_finished = 100
 
@@ -908,35 +924,44 @@ def tab_content_points(df_season_league_filtered):
 
     df_season_league_filtered_finished = df_season_league_filtered[df_season_league_filtered['matchday'] < matchday_not_finished].sort_values(by=['team', 'matchday'])
 
+    df_season_league_filtered_finished['avg_points'] = df_season_league_filtered_finished['points_cum'] / df_season_league_filtered_finished['matchday'] 
 
+    #selected_metric = 'avg_points'
 
-    max_position = df_season_league_filtered_finished['table_position'].max()
+    max_position = df_season_league_filtered_finished[selected_matchdaymetric].max()
     middle_position = (max_position+1)//2
     matchday_max = df_season_league_filtered_finished["matchday"].max()  # Get the maximum matchday
 
-    season_txt = df_season_league_filtered_finished["season"].max() 
-    league_txt = df_season_league_filtered_finished["league"].max() 
+    if selected_matchdaymetric == 'avg_points':
+        yaxis_range = [0, 3]
+        headline_txt = 'Average Points'
+        tick_format= '.2f'
+    else:
+        yaxis_range = [max_position + 0.5, 0.5]
+        headline_txt = 'Table Position'
+        tick_format = 'd'
 
 
     fig_tblpos = px.line(df_season_league_filtered_finished,
                          title = None ,
                          x='matchday', 
-                         y='table_position', 
+                         y=selected_matchdaymetric, 
                          color='team',
                          markers = True)
 
-    # Add annotations for each team's last point
-    for team in df_season_league_filtered_finished["team"].unique():
-        team_data = df_season_league_filtered_finished[df_season_league_filtered_finished["team"] == team]
-        last_row = team_data.iloc[-1]
-        fig_tblpos.add_annotation(
-            x=matchday_max*1.05, 
-            y=last_row["table_position"],
-            text=team,
-            showarrow=False,
-            font=dict(size=12),
-            align="right"
-        )
+    # Add annotations for each team's last point if we have the table position metric
+    if selected_matchdaymetric == 'table_position':
+        for team in df_season_league_filtered_finished["team"].unique():
+            team_data = df_season_league_filtered_finished[df_season_league_filtered_finished["team"] == team]
+            last_row = team_data.iloc[-1]
+            fig_tblpos.add_annotation(
+                x=matchday_max*1.05, 
+                y=last_row[selected_matchdaymetric],
+                text=team,
+                showarrow=False,
+                font=dict(size=12),
+                align="right"
+            )
 
 
     fig_tblpos = apply_darkly_style(fig_tblpos)
@@ -952,21 +977,19 @@ def tab_content_points(df_season_league_filtered):
 
     fig_tblpos.update_traces(
         marker=dict(size=10),
-        #line=dict(width=2),  # Default line width
-        #selector=dict(mode='lines') 
      )
 
     fig_tblpos.update_yaxes(
-        title='Table Position',
+        title=headline_txt,
         title_standoff = 25,
         side = "left",
-        range=[max_position+0.5, 0.5],  # Reversed y-axis for table position
+        range = yaxis_range,
         tickvals=[1, middle_position, max_position],  # Positions to show on the axis
         ticktext=['1', str(middle_position), str(max_position)],  # Labels for those positions
         tickmode='array',  # Explicitly set tickmode to array
-        tickformat='d',  
-        showgrid=True,  # Keep grid lines visible
-        gridwidth=1,  # Gridline width
+        tickformat=tick_format,  
+        showgrid=True,  
+        gridwidth=1,  
         tickangle=0
 )
 
@@ -1182,7 +1205,7 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
 def tab_content_teamstat(selected_team):
 
-    df_team_headtohead_filtered = df_team_headtohead[df_team_headtohead['team'] == selected_team]
+    df_team_headtohead_filtered = df_team_headtohead[(df_team_headtohead['team'] == selected_team) & (df_team_headtohead['games'] >= 15)]
     df_team_headtohead_filtered = df_team_headtohead_filtered.sort_values(by = 'avg_points', ascending = False)
 
     df_team_filtered = df_team_games[(df_team_games['team'] == selected_team) & (df_team_games['league'] != 'preseason')]
@@ -1206,7 +1229,8 @@ def tab_content_teamstat(selected_team):
     next_game_date = df_team_currentmetrics_filtered['date_next'].values[0]
 
      
-    # Create the layout
+    # INFO TABLE BOX 
+
     info_table = html.Div([
         # Row 1: Last game and date
         html.Div([
@@ -1226,7 +1250,7 @@ def tab_content_teamstat(selected_team):
             # html.Div(f"Next Game Date: {next_game_date}", style={'flex': '1', 'textAlign': 'center', 'color': 'white'})
         ], style={'display': 'flex', 'flexDirection': 'row'})
     ], style={
-        'padding': '15px',
+        'padding': '5px',
         'border': '1px solid #2a3f5f',
         'borderRadius': '10px',
         'backgroundColor': '#1e2130',
@@ -1276,11 +1300,12 @@ def tab_content_teamstat(selected_team):
 
     # Customize layout
     fig_team_tblpos.update_layout(
-        title={'text': 'Table Position by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}, 'font': {'size': 14}},
+        title=None,
+        #title={'text': 'Table Position by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}, 'font': {'size': 14}},
         xaxis_title=None,
         yaxis_title=None,
         showlegend=False,
-        margin=dict(l=20, r=20, t=30, b=10),
+        margin=dict(l=10, r=10, t=10, b=10),
         paper_bgcolor='rgba(35, 38, 45, 1)',
         plot_bgcolor='rgba(70, 70, 70, 0.5)',
         xaxis=dict(
@@ -1288,7 +1313,7 @@ def tab_content_teamstat(selected_team):
             type='category'
         ),
         yaxis=dict(
-            range=[16, -1],
+            range=[16, -3],
             tickvals=[1, 14],
             autorange=False, 
             showgrid = False , 
@@ -1345,8 +1370,6 @@ def tab_content_teamstat(selected_team):
     )
 
 
-    ################### SPARKLINE CHART FOR METRICS 
-
     df_team_season_metrics_team_selected = df_team_season_metrics_team[['season','avg_scored', 'avg_conceded', 'avg_points']]
 
     df_team_season_metrics_team_pivot = df_team_season_metrics_team_selected.set_index('season').transpose().reset_index()
@@ -1358,7 +1381,7 @@ def tab_content_teamstat(selected_team):
     fig_h2h_top = go.Figure()
 
     fig_h2h_top = px.bar(
-        df_team_headtohead_filtered.head(10),
+        df_team_headtohead_filtered.head(7),
         x='avg_points',
         y='opponent',
         orientation='h',  
@@ -1386,15 +1409,14 @@ def tab_content_teamstat(selected_team):
         texttemplate='%{x:.1f}',
         showlegend=False
     )
+ 
 
-    
-
-        ################### HeadtoHead - Bot 
+    ################### HeadtoHead - Bot 
 
     fig_h2h_bot = go.Figure()
 
     fig_h2h_bot = px.bar(
-        df_team_headtohead_filtered.tail(10),
+        df_team_headtohead_filtered.tail(7),
         x='avg_points',
         y='opponent',
         orientation='h',  
@@ -1437,7 +1459,8 @@ def tab_content_teamstat(selected_team):
                         dbc.Row(
                             html.H1(
                             selected_team,
-                            className="plotly-header"
+                            className="plotly-header", 
+                            style = {"fontSize": "28px"}
                             ), 
                         className="mb-1", 
                         ),
@@ -1445,7 +1468,7 @@ def tab_content_teamstat(selected_team):
                             html.P(
                             f"{current_position} in {current_league} ( {current_points} points)",
                             style={
-                                "fontSize": "24px",  
+                                "fontSize": "18px",  
                                 "fontWeight": "bold", 
                                 "color": "white",       
                                 "margin": "0"          
@@ -1500,7 +1523,7 @@ def tab_content_teamstat(selected_team):
                                             figure=fig_h2h_top,
                                             style={'height': '100%'}
                                         ),
-                                        width=6,  # Adjust the width as needed
+                                        width=6,  
                                         className="m-0"
                                     ),
                                     dbc.Col(
@@ -1509,7 +1532,7 @@ def tab_content_teamstat(selected_team):
                                             figure=fig_h2h_bot,
                                             style={'height': '100%'}
                                         ),
-                                        width=6,  # Adjust the width as needed
+                                        width=6,  
                                         className="m-0"
                                     ),
                                 ],
