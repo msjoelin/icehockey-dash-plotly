@@ -81,3 +81,32 @@
 .custom-dropdown {
     width: 150px; /* Adjust the width as needed */
 }
+
+
+.square-icon {
+    display: inline-block;
+    width: 16px; 
+    height: 16px; 
+    text-align: center;
+    line-height: 18px; 
+    border-radius: 0px; 
+    font-size: 14px;
+    margin: 2px 0 0 0; 
+    vertical-align: middle;
+}
+
+.win { background-color: green; color: white; }
+.loss { background-color: red; color: white; }
+.draw { background-color: darkblue; color: white; }
+
+.ot-win { background-color: darkblue; color: white;}
+.ot-loss { background-color: darkblue; color: white; }
+
+
+
+p {
+    margin-bottom: 0;
+    margin-top: 2px;
+    text-align : left;
+    vertical-align: middle;
+ }

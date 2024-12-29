@@ -93,32 +93,50 @@ df_team_currentmetrics = client.query(q_team_currentmetrics).to_dataframe()
 
 # Function to map results to icons 
 def map_results_to_icons(results):
+
     icon_map = {
-        'win': '<i class="fas fa-check-circle" style="color: green;"></i>',
-        'draw': '<i class="fas fa-minus-circle" style="color: darkblue;"></i>',
-        'lost': '<i class="fas fa-times-circle" style="color: red;"></i>',
+        'win': '<span class="square-icon win">W</span>',
+        'draw': '<span class="square-icon draw">T</span>',
+        'lost': '<span class="square-icon loss">L</span>',
+        'ot win': '<span class="square-icon ot-win">T</span>',
+        'ot loss': '<span class="square-icon ot-loss">T</span>',
     }
-    
+
+    #icon_map = {
+    #    'win': '<i class="fas fa-check-circle" style="color: green;"></i>',
+    #    'draw': '<i class="fas fa-minus-circle" style="color: darkblue;"></i>',
+    #    'lost': '<i class="fas fa-times-circle" style="color: red;"></i>',
+    #    'ot win': (
+    #        '<span style="position: relative; display: inline-block;">'
+    #        '<i class="fas fa-minus-circle" style="color: darkblue;"></i>'
+    #        '<span style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: green; transform: translateY(-50%);"></span>'
+    #        '</span>'
+    #    ),  
+    #    'ot loss': (
+    #        '<span style="position: relative; display: inline-block;">'
+    #        '<i class="fas fa-minus-circle" style="color: darkblue;"></i>'
+    #        '<span style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background-color: red; transform: translateY(-50%);"></span>'
+    #        '</span>'
+    #    ), 
+    #}
+  
     if not results:
         return ''
 
     icons = []
     results_list = results.split(',')
 
-    for result in results_list[:-1]:
+    for result in results_list[:]:
         icons.append(icon_map.get(result, ''))  # Default to empty if not found
     
-    last_icon = f'<span class="rounded-icon">{icon_map.get(results_list[-1], "")}</span>'
-    icons.append(last_icon)
+    # last_icon = f'<span class="rounded-icon">{icon_map.get(results_list[-1], "")}</span>'
+    # icons.append(last_icon)
 
     return ' '.join(icons)
 
 # Apply the mapping function to the 'last_5' column
 df_team_games['last_5_icons'] = df_team_games['last_5_games'].apply(map_results_to_icons)
-df_team_games['result_icon'] = df_team_games['result'].apply(map_results_to_icons)
-
-
-style_data_conditional = get_table_style()
+df_team_games['result_icon'] = df_team_games['result_details'].apply(map_results_to_icons)
 
 
 # INITIALIZE DASH APP 
@@ -248,10 +266,6 @@ app.layout = html.Div([
                                 options=[{'label': grp, 'value': grp} for grp in df_team_games['league'].unique()],
                                 value='shl',
                                 className='m-1',
-                               # style={
-                               #      'width': '150px',  
-                               #      
-                               #  }
                             ),
                             dbc.Tooltip("Select a league",  target="league-dropdown", ),
                             dcc.Dropdown(
@@ -259,11 +273,8 @@ app.layout = html.Div([
                                 options=[{'label': grp, 'value': grp} for grp in df_team_games['season'].unique()],
                                 value='2024/25',
                                 className='m-1',
-                              #   style={
-                              #       'width': '150px',
-                              #   }
                             ),
-                            # dbc.Tooltip("Select a season", target="season-dropdown"),       
+                            dbc.Tooltip("Select a season", target="season-dropdown"),       
                             # Home/Away Button 
                             dbc.ButtonGroup(
                                 [
@@ -280,8 +291,7 @@ app.layout = html.Div([
                                     'marginTop': '10px',
                                     'width': 'auto',  
                                     'marginLeft': '0px',  
-                                    'marginRight': 'auto'  ,
-                                    
+                                    'marginRight': 'auto'  ,                                   
                                     }
                             ),
                                  
@@ -302,10 +312,8 @@ app.layout = html.Div([
                                     'marginLeft': '0px',  
                                     'marginRight': 'auto'  ,
                                     'display': 'flex', 'justify-content': 'flex-start'
-                                    }
-                            
+                                    }  
                         ),
-
                     dcc.Dropdown(
                             id='matchday-dropdown',
                             options=[{'label': grp, 'value': grp} for grp in df_matchdays['matchday'].unique()],
@@ -313,14 +321,6 @@ app.layout = html.Div([
                             placeholder='Select matchday',
                             className='m-1',
                             searchable=True,
-                    #        style={
-                    #            'marginBottom': '10px', 
-                    #            'marginTop': '10px',
-                    #            'width': '200px',  
-                    #            'marginLeft': '0px',  
-                    #            'marginRight': 'auto' ,
-                    #            'display': 'flex', 'justify-content': 'flex-start'
-                    #            }
                             ),
                     dbc.Tooltip("Select matchday", target="matchday-dropdown",),
 
@@ -331,26 +331,18 @@ app.layout = html.Div([
                             placeholder='Select team',
                             className='m-1',
                             searchable=True,
-                    #        style={
-                    #            'marginBottom': '10px', 
-                    #            'marginTop': '10px',
-                    #            'width': '300px',  
-                    #            'marginLeft': '0px',  
-                    #            'marginRight': 'auto' ,
-                    #            'display': 'flex', 'justify-content': 'flex-start'
-                    #            }
                         ),
                     dbc.Tooltip("Select team", target="team-dropdown"),
 
                             dbc.ButtonGroup(
                                 [
-                                    dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='avg_points', style={'margin': '5px'}),
-                                    dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value='avg_scored', style={'margin': '5px'}),
-                                    dbc.Button("Conceded", id="btn-conceded", n_clicks=0, color="primary", outline=True, value='avg_conceded', style={'margin': '5px'}),
-                                    dbc.Button("Spectators (H)", id="btn-spectators-home", n_clicks=0, color="primary", outline=True, value='avg_spectators', style={'margin': '5px'}),
-                                    dbc.Button("Spectators (A)", id="btn-spectators-away", n_clicks=0, color="primary", outline=True, value='avg_spectators_away', style={'margin': '5px'}),
-                                    dbc.Button("Points (H)", id="btn-points-home", n_clicks=0, color="primary", outline=True, value='avg_points_home', style={'margin': '5px'}),
-                                    dbc.Button("Points (A)", id="btn-points-away", n_clicks=0, color="primary", outline=True, value='avg_points_away', style={'margin': '5px'}),
+                                    dbc.Button("Points", id="btn-points", n_clicks=0, color="primary", outline=True, value='avg_points', style={'margin': '3px'}),
+                                    dbc.Button("Scored", id="btn-scored", n_clicks=0, color="primary", outline=True, value='avg_scored', style={'margin': '3px'}),
+                                    dbc.Button("Goal Against", id="btn-conceded", n_clicks=0, color="primary", outline=True, value='avg_conceded', style={'margin': '3px'}),
+                                    dbc.Button("Spectators (H)", id="btn-spectators-home", n_clicks=0, color="primary", outline=True, value='avg_spectators', style={'margin': '3px'}),
+                                    dbc.Button("Spectators (A)", id="btn-spectators-away", n_clicks=0, color="primary", outline=True, value='avg_spectators_away', style={'margin': '3px'}),
+                                    dbc.Button("Points (H)", id="btn-points-home", n_clicks=0, color="primary", outline=True, value='avg_points_home', style={'margin': '3px'}),
+                                    dbc.Button("Points (A)", id="btn-points-away", n_clicks=0, color="primary", outline=True, value='avg_points_away', style={'margin': '3px'}),
                                 ],
                                 id='btn-group-metricselector',
                                 vertical=False,
@@ -362,10 +354,8 @@ app.layout = html.Div([
                     style={'display': 'flex', 'flexDirection': 'row', 'flexWrap': 'wrap', 'justifyContent': 'flex-start', 'align-items': 'flex-start'}
                     ),
                     width=8  
-                ),
-                
+                ),  
             ],
-            # justify="between", 
             align="left"  ,
             style={"paddingLeft": "0", "paddingRight": "0", 'marginLeft': '0'},
         )
@@ -683,15 +673,13 @@ def update_table(selected_league, selected_season, selected_matchday, homeaway_b
     if lastgames_button_text =="last10":
         df_table_filtered = df_table_filtered.sort_values(by='date', ascending=False).groupby('team').head(10).reset_index(drop=True)
     
-
-
  
     df_table_filtered = df_table_filtered.sort_values(by=['team', 'date'])
 
-    df_table_filtered['last_5_results'] = [','.join(df_table_filtered['result'][max(0, i-4):i+1]) for i in range(len(df_table_filtered))]
+    df_table_filtered['last_5_results'] = [','.join(df_table_filtered['result_details'][max(0, i-4):i+1]) for i in range(len(df_table_filtered))]
 
     df_table_filtered['last_5_icons'] = df_table_filtered['last_5_results'].apply(map_results_to_icons)
-    df_table_filtered['result_icon'] = df_table_filtered['result'].apply(map_results_to_icons)
+    df_table_filtered['result_icon'] = df_table_filtered['result_details'].apply(map_results_to_icons)
     
     # Make the aggregation 
     df_table_filtered = (
@@ -701,10 +689,18 @@ def update_table(selected_league, selected_season, selected_matchday, homeaway_b
         win=('win', 'sum'),
         lost=('lost', 'sum'),
         draw=('draw', 'sum'),
+        ot_win=('ot_win', 'sum'),
+        ot_loss=('ot_lost', 'sum'),
         scored=('score_team', 'sum'),
         conceded=('score_opponent', 'sum'),
         games=('points', 'size')  ,
-        last_5_icons=('last_5_icons', 'last')  # Get the last value in each group
+
+        avg_points=('points', lambda x: round(x.mean(), 2)),
+        avg_scored=('score_team', lambda x: round(x.mean(), 2)),
+        avg_conceded=('score_opponent', lambda x: round(x.mean(), 2)),
+        avg_goals_game=('goals_game', lambda x: round(x.mean(), 2)),
+
+        last_5_icons=('last_5_icons', 'last')  
     )
     .reset_index()
     )
@@ -801,13 +797,10 @@ def tab_content_table(df_table_filtered):
 
     df_table_filtered.insert(0, 'table_position', range(1, len(df_table_filtered) + 1))
 
-    return dbc.Container(
-        fluid=True,
-        style={'height': '65vh'},  
-        children=[
-        dbc.Row([
-            dbc.Col(
-                dash_table.DataTable(
+    tbl_position_style = get_table_style()
+
+
+    table_tbl = dash_table.DataTable(
                    id='data-table',
                     columns=[
                         {"name": "", "id": "table_position"},
@@ -816,44 +809,82 @@ def tab_content_table(df_table_filtered):
                         {"name": "Points", "id": "points"}, 
                         {"name": "GD", "id": "goal_difference_txt"}, 
                         {"name": "W", "id": "win"}, 
-                        {"name": "D", "id": "draw"}, 
-                        {"name": "L", "id": "lost"},                         
+                        {"name": "OT W", "id": "ot_win"}, 
+                        {"name": "OT L", "id": "ot_loss"}, 
+                        {"name": "L", "id": "lost"},
                         {"name": "Last 5", "id": "last_5_icons", "presentation": "markdown"}, 
+                        {"name": "Ø scored", "id": "avg_scored"},
+                        {"name": "Ø against", "id": "avg_conceded"},
+                        {"name": "Ø goals", "id": "avg_goals_game"}
                     ],
                     data=df_table_filtered.to_dict('records'),
                     page_size=len(df_table_filtered),  
-                    style_table={'overflowX': 'auto', 'width': '100%','height': '100%'},
+                    style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%','overflowX': 'auto'},
                     markdown_options={"html": True}, 
-                     style_cell={
-                         'backgroundColor': '#343a40',
-                         'color': 'white',
-                         'textAlign': 'left',
-                     },
-                     style_header={
-                         'backgroundColor': '#495057',
-                         'fontWeight': 'bold',
-                         'color': 'white'
-                     },
+                    style_cell={
+                        'textAlign': 'left',
+                        'padding': '3px',
+                        'backgroundColor': 'rgb(50, 50, 50)',
+                        'color': 'white',
+                        'fontSize': '14px',
+                        'height': '18px',
+                        'lineHeight': '1',
+                        'whiteSpace': 'normal',
+                    },
+                    style_header={
+                        'backgroundColor': 'rgb(30, 30, 30)',
+                        'color': 'white',
+                        'fontWeight': 'bold',
+                        'textAlign': 'left',
+                        'whiteSpace': 'normal',
+                        'wordBreak': 'break-word',
+                        'padding': '3px',
+                    },
                      style_cell_conditional=[
-                        {'if': {'column_id': 'table_position'}, 'width': '5%'},
-                        {'if': {'column_id': 'team'}, 'width': '20%'},
+                        {'if': {'column_id': 'table_position'}, 'width': '5%', 'textAlign': 'center'},
+                        {'if': {'column_id': 'team'}, 'width': '13%'},
                         {'if': {'column_id': 'games'}, 'width': '10%'},
                         {'if': {'column_id': 'points'}, 'width': '10%'},
-                        {'if': {'column_id': 'goal_difference_txt'}, 'width': '15%'},
-                        {'if': {'column_id': 'win'}, 'width': '10%'},
-                        {'if': {'column_id': 'draw'}, 'width': '10%'},
-                        {'if': {'column_id': 'lost'}, 'width': '10%'},
-                        {'if': {'column_id': 'last_5_icons'}, 'width': '10%'},
+                        {'if': {'column_id': 'goal_difference_txt'}, 'width': '10%'},
+                        {'if': {'column_id': 'win'}, 'width': '6%',},
+                        {'if': {'column_id': 'ot_win'}, 'width': '6%',},
+                        {'if': {'column_id': 'ot_loss'}, 'width': '6%',},
+                        {'if': {'column_id': 'lost'}, 'width': '6%',},
+                        {'if': {'column_id': 'last_5_icons'}, 'width': '10%',},
+                        {'if': {'column_id': 'avg_scored'}, 'width': '6%',},
+                        {'if': {'column_id': 'avg_conceded'}, 'width': '6%',},
+                        {'if': {'column_id': 'avg_goals_game'}, 'width': '6%',},                        
                     ],
-                     style_data_conditional=style_data_conditional,
-                     row_selectable=False,
-                     cell_selectable=False
-                    )
+                    style_data_conditional=tbl_position_style + [
+                        {
+                            'if': {'column_id': 'points'}, 
+                            'fontWeight': 'bold'  
+                        }
+                    ],
+                    row_selectable=False,
+                    cell_selectable=False,
+                    style_as_list_view=True,
+                    sort_action='native',  
+                    sort_mode='single', 
+            )
+
+    return dbc.Container(
+        fluid=True,
+        style={'height': '100%'},  
+        children=[
+            dbc.Row(
+                style={'height': '100%'},  
+                children=[
+                    dbc.Col(
+                        table_tbl,
+                        width=12,
+                        className = "my-1",
+                        # style={'height': '100%', 'padding':'0'}  
                     ),
                 ]
             )
         ]
-    )
+)
 
 
 ################################################################################################
@@ -1553,6 +1584,7 @@ def tab_content_teamcomparison(metricselector_text, selected_league):
             ((df_max - df_min) * i) + df_min
             for i in bounds
         ]
+
         styles = []
         for i in range(1, len(bounds)):
             min_bound = ranges[i - 1]
