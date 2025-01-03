@@ -187,13 +187,14 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-1',
+                    active_tab='tab-2',
                     children=[
                         dbc.Tab(label='🏆 Table', tab_id='tab-1'),
-                        dbc.Tab(label='📈 Matchday Table Position', tab_id='tab-2'),
-                        dbc.Tab(label='📊 Point Distribution', tab_id='tab-3'),
-                        dbc.Tab(label='📋 Team Statistics', tab_id='tab-4'),
-                        dbc.Tab(label='⚖️ Team Comparison', tab_id='tab-5'),
+                        dbc.Tab(label='🎮 Games', tab_id='tab-2'),
+                        dbc.Tab(label='📈 Matchday Table Position', tab_id='tab-3'),
+                        dbc.Tab(label='📊 Point Distribution', tab_id='tab-4'),
+                        dbc.Tab(label='📋 Team Statistics', tab_id='tab-5'),
+                        dbc.Tab(label='⚖️ Team Comparison', tab_id='tab-6'),
                     ],
                     className="bg-dark text-white" 
                 )
@@ -431,15 +432,18 @@ def update_dropdown_visibility(active_tab):
         return 'm-1 custom-dropdown' , 'm-1 custom-dropdown',  'm-1', 'm-1', 'm-1 d-none', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '🏆 Standings', 'This section contains standings, based on filter selection.'
 
     elif active_tab == 'tab-2':
-        return 'm-1 custom-dropdown', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none', 'm-1 d-none', '📈 Matchday Table Position', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
+        return 'm-1 custom-dropdown' , 'm-1 custom-dropdown',  'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none','m-1 d-none', 'm-1 d-none', '🎮 Games', 'This section contains a list of games, based on filter selection.'
 
     elif active_tab == 'tab-3':
-        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none', 'm-1 d-none',  'm-1 d-none', '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
+        return 'm-1 custom-dropdown', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none', 'm-1 d-none', '📈 Matchday Table Position', 'This section show the table position by team for each matchday. Each line represents one team. Double click on a team in the legend to the right to show one specific team.'
 
     elif active_tab == 'tab-4':
-        return 'd-none', 'd-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown',   'm-1 d-none', '📋 Team Statistics', 'This section visualizes team statistics.'
+        return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown','m-1 d-none', 'm-1 d-none',  'm-1 d-none', '📊 Point Distribution', 'This section visualizes boxplots for point distribution for a selected league and matchday, where points illustrates specific teams. Narrow box -> very tight, low distribution of points. Wide box -> very spread out. Horizontal line illustrates the median value Hoover for more information.'
 
     elif active_tab == 'tab-5':
+        return 'd-none', 'd-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 custom-dropdown',   'm-1 d-none', '📋 Team Statistics', 'This section visualizes team statistics.'
+
+    elif active_tab == 'tab-6':
         return 'd-none', 'm-1 custom-dropdown', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none','m-1 d-none',   'm-1 mr-1', '⚖️ Team Comparison', 'This section visualizes the selected metric by team and season Grey box means that the team did not play in the selected leauge that season.'
     # Default hide all 
     return 'm-1 d-none', 'm-1', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none', 'm-1 d-none',   'm-1 d-none', 'n/a', 'n/a'
@@ -752,12 +756,14 @@ def render_content(selected_tab, table_filtered, season_league_filtered, league_
     if selected_tab == 'tab-1':
         return tab_content_table(df_table_filtered)  
     elif selected_tab == 'tab-2':
-        return tab_content_points(df_season_league_filtered, selected_matchdaymetric)
+        return tab_content_games(df_season_league_filtered)
     elif selected_tab == 'tab-3':
-        return tab_content_pointdistr(df_league_matchday_filtered)
+        return tab_content_points(df_season_league_filtered, selected_matchdaymetric)
     elif selected_tab == 'tab-4':
-        return tab_content_teamstat(selected_team)
+        return tab_content_pointdistr(df_league_matchday_filtered)
     elif selected_tab == 'tab-5':
+        return tab_content_teamstat(selected_team)
+    elif selected_tab == 'tab-6':
         return tab_content_teamcomparison(metricselector_text, selected_league)
 
 
@@ -901,6 +907,129 @@ def tab_content_table(df_table_filtered):
             )
         ]
 )
+
+
+################################################################################################
+
+#                               TAB 2 GAMES
+
+################################################################################################
+
+def tab_content_games(df_season_league_filtered):
+
+    df_games_filtered = df_season_league_filtered[(df_season_league_filtered['h_a'] == 'home') & (df_season_league_filtered['game_id'].notna())]
+
+    df_games_filtered = df_games_filtered.sort_values(by=['league', 'date', 'team'], ascending=[True, False, True])
+
+    df_games_filtered['date_adjusted'] = df_games_filtered['date'].where(
+                                            df_games_filtered['date'] != df_games_filtered['date'].shift(1), ''
+                                            )
+    
+
+    games_tbl = dash_table.DataTable(
+                   id='data-games-table',
+                    columns=[
+                        {"name": "League", "id": "league"},
+                        {"name": "Date", "id": "date_adjusted"},
+
+                        {"name": "Home", "id": "team"},
+                        {"name": "", "id": "score_team"},
+
+                        {"name": "", "id": "periodscore"},
+
+                        {"name": "", "id": "score_opponent"},
+                        {"name": "Away", "id": "opponent"},
+                 
+                    ],
+                  #  tooltip={
+                  #              "games": {'value': 'Games Played', 'use_with': 'both'},
+                  #          },
+
+                    css=[{
+                            'selector': '.dash-table-tooltip',
+                            'rule': 'background-color: grey; font-family: monospace; color: white'
+                        }],
+                        
+                    data=df_games_filtered.to_dict('records'),
+                    page_action="none",  
+                    markdown_options={"html": True}, 
+                    style_cell={
+                        'textAlign': 'left',
+                        'padding': '3px',
+                        'backgroundColor': 'rgb(50, 50, 50)',
+                        'color': 'white',
+                        'fontSize': '14px',
+                        'height': '18px',
+                        'lineHeight': '1',
+                        'whiteSpace': 'normal',
+                    },
+                    style_header={
+                        'backgroundColor': 'rgb(30, 30, 30)',
+                        'color': 'white',
+                        'fontWeight': 'bold',
+                        'textAlign': 'left',
+                        'whiteSpace': 'normal',
+                        'wordBreak': 'break-word',
+                        'padding': '3px',
+                    },
+                    style_data_conditional=[
+                    {
+                        "if": {"filter_query": "{result_details} contains 'win'", "column_id": "score_team"},
+                        "backgroundColor": "#28a745",  # GREEN
+                        "color": "#ffffff"  
+                    },
+                     {
+                         "if": {"filter_query": "{result_details} contains 'los'", "column_id": "score_team"},
+                         "backgroundColor": "#dc3545",  # RED
+                         "color": "#ffffff"  
+                     },
+                     {
+                         "if": {"filter_query": "{result_details} contains 'win'", "column_id": "score_opponent"},
+                         "backgroundColor": "#dc3545",  # RED
+                         "color": "#ffffff"
+                     },
+                    {
+                        "if": {"filter_query": "{result_details} contains 'los'", "column_id": "score_opponent"},
+                        "backgroundColor": "#28a745",  # GREEN
+                        "color": "#ffffff"
+                    },
+                    ],
+                     style_cell_conditional=[
+                        {'if': {'column_id': 'league'}, 'width': '100px'},
+                        {'if': {'column_id': 'date_adjusted'}, 'width': '100px'},
+                        {'if': {'column_id': 'team'}, 'width': '200px', "paddingLeft": "40px"},
+                        {'if': {'column_id': 'score_opponent'}, 'width': '50px', "textAlign": "center"},
+                        {'if': {'column_id': 'score_team'}, 'width': '50px', "textAlign": "center"},    
+                        {'if': {'column_id': 'periodscore'}, 'width': '90px', "textAlign": "center", 'fontSize': '12px'},    
+                        {'if': {'column_id': 'opponent'}, 'width': '240px', "paddingLeft": "40px"},                        
+                    ],
+                    row_selectable=False,
+                    cell_selectable=False,
+                    style_as_list_view=True,
+                   # sort_action='native',  
+                   # sort_mode='single', 
+            )
+
+    return dbc.Container(
+        fluid=True,
+        style={'height': '100%', 'overflowX': 'auto'},
+        children=[
+            dbc.Row(
+                style={'height': 'auto'},  
+                children=[
+                    dbc.Col(
+                        games_tbl,
+                        width=8,
+                        className = "my-1",
+                        style={'height': 'auto'} 
+                        # style={'height': '100%', 'padding':'0'}  
+                    ),
+                ]
+            )
+        ]
+)
+
+
 
 
 ################################################################################################
