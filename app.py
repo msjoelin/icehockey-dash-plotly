@@ -187,7 +187,7 @@ app.layout = html.Div([
             dbc.Col([
                 dbc.Tabs(
                     id="tabs",
-                    active_tab='tab-2',
+                    active_tab='tab-1',
                     children=[
                         dbc.Tab(label='🏆 Table', tab_id='tab-1'),
                         dbc.Tab(label='🎮 Games', tab_id='tab-2'),
