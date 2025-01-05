@@ -699,13 +699,13 @@ def update_table(selected_league, selected_season, selected_matchday, homeaway_b
         conceded=('score_opponent', 'sum'),
         games=('points', 'size')  ,
 
-        avg_points=('points', lambda x: round(x.mean(), 2)),
-        avg_points_pregame_ahead=('points_ahead_pregame', lambda x: round(x.mean(), 2)),
-        avg_points_pregame_behind=('points_behind_pregame', lambda x: round(x.mean(), 2)),
+        avg_points=('points', lambda x: round(x.dropna().mean(), 2) if not x.dropna().empty else 0),
+        avg_points_pregame_ahead=('points_ahead_pregame', lambda x: round(x.dropna().mean(), 2) if not x.dropna().empty else 0),
+        avg_points_pregame_behind=('points_behind_pregame', lambda x: round(x.dropna().mean(), 2) if not x.dropna().empty else 0),
 
-        avg_scored=('score_team', lambda x: round(x.mean(), 2)),
-        avg_conceded=('score_opponent', lambda x: round(x.mean(), 2)),
-        avg_goals_game=('goals_game', lambda x: round(x.mean(), 2)),
+        avg_scored=('score_team', lambda x: round(x.dropna().mean(), 2) if not x.dropna().empty else 0),
+        avg_conceded=('score_opponent', lambda x: round(x.dropna().mean(), 2) if not x.dropna().empty else 0),
+        avg_goals_game=('goals_game', lambda x: round(x.dropna().mean(), 2) if not x.dropna().empty else 0),
 
         last_5_icons=('last_5_icons', 'last')  
     )
@@ -838,8 +838,8 @@ def tab_content_table(df_table_filtered):
                                 "ot_loss": {'value': 'Number of games with OverTime Loss', 'use_with': 'both'},
                                 "lost": {'value': 'Number of games with Loss', 'use_with': 'both'},
                                 "avg_points": {'value': 'Average points per game', 'use_with': 'both'},
-                                "avg_points_pregame_ahead": {'value': 'Average points per game, when the team is ahead opponent in the table', 'use_with': 'both'},
-                                "avg_points_pregame_behind": {'value': 'Average points per game, when the team is behind opponent in the table', 'use_with': 'both'},
+                                "avg_points_pregame_ahead": {'value': 'Average points per game, when the team was ahead of the opponent in the table (pregame)', 'use_with': 'both'},
+                                "avg_points_pregame_behind": {'value': 'Average points per game, when the team was behind the opponent in the table (pregame)', 'use_with': 'both'},
                                 "avg_scored": {'value': 'Average scored goals per game', 'use_with': 'both'},
                             },
 
@@ -1340,7 +1340,7 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
 ################################################################################################
 
-#                               TAB 4 TEAMSTATS
+#                               TAB 5 TEAMSTATS
 
 ################################################################################################
 
