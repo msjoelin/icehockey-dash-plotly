@@ -27,3 +27,32 @@ def get_table_style():
             'color': 'black'
         } for i in range(12, 14)
     ]
+
+
+def get_table_position_color():
+    return [
+        {
+            'if': {'filter_query': '{{table_position}} = {}'.format(i), 'column_id': 'table_position'},
+            'backgroundColor': '#66cdaa',  # Light green
+            'color': 'black',
+            'padding': '8px'
+        } for i in range(0, 6)
+    ] + [
+        {
+            'if': {'filter_query': '{{table_position}} = {}'.format(i), 'column_id': 'table_position'},
+            'backgroundColor': '#87cefa',  # Light blue
+            'color': 'black'
+        } for i in range(6, 10)
+    ] + [
+        {
+            'if': {'filter_query': '{{table_position}} = {}'.format(i), 'column_id': 'table_position'},
+            'backgroundColor': '#a9a9a9',  # Grey
+            'color': 'black'
+        } for i in range(10, 12)
+    ] + [
+        {
+            'if': {'filter_query': '{{table_position}} = {}'.format(i), 'column_id': 'table_position'},
+            'backgroundColor': '#f08080',  # Light red
+            'color': 'black'
+        } for i in range(12, 14)
+    ]
