@@ -11,6 +11,7 @@ import json
 import base64
 
 from table_styles import get_table_style
+from table_styles import get_table_position_color
 from chart_styles import apply_darkly_style
 
 from google.cloud import bigquery
@@ -121,7 +122,7 @@ df_team_games['result_icon'] = df_team_games['result_details'].apply(map_results
 # INITIALIZE DASH APP 
 app = dash.Dash(__name__, 
                 external_stylesheets=[dbc.themes.DARKLY, "https://use.fontawesome.com/releases/v5.15.4/css/all.css"], 
-                title='🏒 Hockey Insights Hub', 
+                title="🏒 Mackan's Hockey Hub", 
                 suppress_callback_exceptions=True)
 
 server = app.server
@@ -132,10 +133,10 @@ app.layout = html.Div([
         ### HEADER ROW 
         dbc.Row(
             [
-                dbc.Col(html.H1("🏒 Hockey Insights Hub"), width=6, className="d-flex align-items-center"), 
+                dbc.Col(html.H1("🏒 Mackan's Hockey Hub"), width=6, className="d-flex align-items-center"), 
                 dbc.Col(
                     dbc.Button(
-                        "About this dashboard",
+                        "About Mackan's Hockey Hub",
                         id="about-button",
                         color="info",
                         size="sm",
@@ -152,17 +153,17 @@ app.layout = html.Div([
         # MODAL FOR INFO BUTTON
         dbc.Modal(
             [
-                dbc.ModalHeader(dbc.ModalTitle("About Hockey Insights Hub")),
+                dbc.ModalHeader(dbc.ModalTitle("About Mackan's Hockey Hub")),
                 dbc.ModalBody(
                     html.Div([
-                        html.P("Hey there! 👋 This dashboard is all about diving into 🏒 ice hockey stats and having some fun with it."),
+                        html.P("Hey there! 👋 Mackan's Hockey Hub is all about diving into 🏒 ice hockey stats and having some fun with it."),
                         html.Br(),
                         html.P("You’ll find data from Sweden’s top two leagues, SHL and HockeyAllsvenskan, updated daily 📅 to keep things fresh."),
                         html.P("No promises that it’s perfect—so if you spot something odd, just roll with it. This is for fun, after all! 🎉"),
                         html.Br(),
                         html.P([
                             "Got questions, ideas, or just want to say hi? 💡 Shoot me an email at ",
-                            html.A("marcussjolin89@gmail.com", href="mailto:marcussjolin89@gmail.com", style={"textDecoration": "none", "color": "#007bff"}),
+                            html.A("mackanshockeyhub@gmail.com", href="mailto:mackanshockeyhub@gmail.com", style={"textDecoration": "none", "color": "#007bff"}),
                             " ✉️"
                         ]),
                 ])
@@ -714,7 +715,7 @@ def update_table(selected_league, selected_season, selected_matchday, homeaway_b
 
     df_table_filtered['goal_difference'] = df_table_filtered['scored'] - df_table_filtered['conceded'] 
     df_table_filtered['goal_difference_txt'] = (df_table_filtered['scored'].astype(int).astype(str)  
-                                                + ' - '  
+                                                + '-'  
                                                 + df_table_filtered['conceded'].astype(int).astype(str)
                                                 + ' ('  
                                                 + df_table_filtered['goal_difference'].astype(int).astype(str)
@@ -1369,6 +1370,97 @@ def tab_content_teamstat(selected_team):
     next_game = df_team_currentmetrics_filtered['game_next'].values[0]
     next_game_date = df_team_currentmetrics_filtered['date_next'].values[0]
 
+
+    df_team_season_metrics_filtered = df_team_season_metrics[(df_team_season_metrics['team'] == selected_team) & (df_team_season_metrics['league'] != 'preseason') & (df_team_season_metrics['is_current_season'] == True) ]
+
+    df_team_season_metrics_filtered[['avg_points', 'avg_points_home', 'avg_points_away', 'avg_scored', 'avg_conceded']] = df_team_season_metrics_filtered[['avg_points', 'avg_points_home', 'avg_points_away', 'avg_scored', 'avg_conceded']].round(2)
+
+
+    tbl_teamposition_style = get_table_position_color()
+
+
+    tbl_teamstandings = dash_table.DataTable(
+                   id='table-teamstanding',
+                    columns=[
+                        {"name": "", "id": "league_short"},
+                        {"name": "Pos", "id": "table_position"},
+                        {"name": "Team", "id": "team"},
+                        {"name": "GP", "id": "nbr_played"}, 
+                        {"name": "Points", "id": "points"},    
+                        {"name": "W", "id": "nbr_win"}, 
+                        {"name": "T", "id": "nbr_draw"}, 
+                        {"name": "L", "id": "nbr_lost"},
+                        {"name": "Ø Pts", "id": "avg_points"},
+                        {"name": "Ø Pts H", "id": "avg_points_home"},
+                        {"name": "Ø Pts A", "id": "avg_points_away"},
+                        {"name": "Ø GS", "id": "avg_scored"},
+                        {"name": "Ø GA", "id": "avg_conceded"},
+                    ],
+                    tooltip={
+                                "nbr_played": {'value': 'Games Played', 'use_with': 'both'},
+                                "nbr_win": {'value': 'Number of games with Win', 'use_with': 'both'},
+                                "nbr_draw": {'value': 'Number of games Tie', 'use_with': 'both'},
+                                "nbr_lost": {'value': 'Number of games with Loss', 'use_with': 'both'},
+                                "avg_points": {'value': 'Average points per game', 'use_with': 'both'},
+                                "avg_points_home": {'value': 'Average points per game playing home', 'use_with': 'both'},
+                                "avg_points_away": {'value': 'Average points per game playing away', 'use_with': 'both'},
+                                "avg_scored": {'value': 'Average Goals Scored per game', 'use_with': 'both'},
+                                "avg_conceded": {'value': 'Average Goals Against per game', 'use_with': 'both'},
+                            },
+
+                    css=[{
+                            'selector': '.dash-table-tooltip',
+                            'rule': 'background-color: grey; font-family: monospace; color: white'
+                        }],
+                        
+                    data=df_team_season_metrics_filtered.to_dict('records'),
+                    style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%','overflowX': 'auto'},
+                    markdown_options={"html": True}, 
+                    style_cell={
+                        'textAlign': 'left',
+                        'padding': '3px',
+                        'backgroundColor': 'rgb(50, 50, 50)',
+                        'color': 'white',
+                        'fontSize': '14px',
+                        'height': '18px',
+                        'lineHeight': '1',
+                        'whiteSpace': 'normal',
+                    },
+                    style_header={
+                        'backgroundColor': 'rgb(30, 30, 30)',
+                        'color': 'white',
+                        'fontWeight': 'bold',
+                        'textAlign': 'left',
+                        'whiteSpace': 'normal',
+                        'wordBreak': 'break-word',
+                        'padding': '3px',
+                    },
+                     style_cell_conditional=[
+                        {'if': {'column_id': 'league_short'}, 'width': '5%', 'textAlign': 'center'},
+                        {'if': {'column_id': 'table_position'}, 'width': '5%', 'textAlign': 'center'},
+                        {'if': {'column_id': 'team'}, 'width': '18%'},
+                        {'if': {'column_id': 'points'}, 'width': '8%'},
+                        {'if': {'column_id': 'nbr_played'}, 'width': '6%'},
+                        {'if': {'column_id': 'nbr_win'}, 'width': '6%',},
+                        {'if': {'column_id': 'nbr_draw'}, 'width': '6%',},
+                        {'if': {'column_id': 'nbr_lost'}, 'width': '6%',},
+                        {'if': {'column_id': 'avg_points'}, 'width': '8%',},
+                        {'if': {'column_id': 'avg_points_home'}, 'width': '8%',},
+                        {'if': {'column_id': 'avg_points_away'}, 'width': '8%',},
+                        {'if': {'column_id': 'avg_scored'}, 'width': '8%',},
+                        {'if': {'column_id': 'avg_conceded'}, 'width': '8%',},                  
+                    ],
+                    style_data_conditional=tbl_teamposition_style + [
+                        {
+                            'if': {'column_id': 'points'}, 
+                            'fontWeight': 'bold'  
+                        },
+                    ],
+                    row_selectable=False,
+                    cell_selectable=False,
+                    style_as_list_view=True
+            )
+
      
     # INFO TABLE BOX 
 
@@ -1503,11 +1595,17 @@ def tab_content_teamstat(selected_team):
 
      
     fig_teamstat_matches.update_layout(
-        title={'text': 'Match Results by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}},
+        title={
+                'text': "Match Results by Season",  # Main title
+                'font': {'size': 20},
+      #          'x': 0,  # Left-align the title
+                'xanchor': 'left'
+            },
+       # title={'text': 'Match Results by Season','x': 0,'xanchor': 'left','pad': {'l': 5, 't': 5}},
         xaxis_title="Matchday",
         yaxis_title=None,
         autosize=True,
-        margin=dict(l=20, r=20, t=30, b=10),
+        margin=dict(l=10, r=10, t=50, b=10),
     )
 
 
@@ -1517,74 +1615,54 @@ def tab_content_teamstat(selected_team):
 
     df_team_season_metrics_team_pivot.columns = ['Metric'] + list(df_team_season_metrics_team_selected['season'])  # Rename columns
 
-    ################### HeadtoHead - Top 
+    ################### HeadtoHead FIGURE
 
     fig_h2h_top = go.Figure()
 
     fig_h2h_top = px.bar(
-        df_team_headtohead_filtered.head(7),
+        df_team_headtohead_filtered.head(14),
         x='avg_points',
         y='opponent',
         orientation='h',  
         color='avg_points',
         color_continuous_scale='RdYlGn',
-        range_color=[0.5, 2.5], 
+        range_color=[0.3, 2.5], 
         title="🥳 Opponents",
         labels={'opponent': 'Opponent', 'avg_points':  'Ø points'},
-        text='avg_points'
+       # text='avg_points'
     )
 
     fig_h2h_top = apply_darkly_style(fig_h2h_top)
 
-    # Customize layout
-    fig_h2h_top.update_layout(
-        yaxis=dict(categoryorder='total ascending', title=''), 
-        xaxis = dict(title=''),
-        margin=dict(l=10, r=10, t=50, b=30) , 
-        showlegend=False,
-        coloraxis_showscale=False,
-        autosize=True
-    )
-
     fig_h2h_top.update_traces(
         texttemplate='%{x:.1f}',
-        showlegend=False
-    )
- 
+        showlegend=False,
+        textfont=dict(size=18)
+        )
 
-    ################### HeadtoHead - Bot 
-
-    fig_h2h_bot = go.Figure()
-
-    fig_h2h_bot = px.bar(
-        df_team_headtohead_filtered.tail(7),
-        x='avg_points',
-        y='opponent',
-        orientation='h',  
-        color='avg_points',
-        color_continuous_scale='RdYlGn',
-        range_color=[0.5, 2.5], 
-        title="😱 Opponents",
-        labels={'opponent': 'Opponent', 'avg_points': 'Ø points'},
-        text='avg_points'
-    )
-
-    fig_h2h_bot = apply_darkly_style(fig_h2h_bot)
 
     # Customize layout
-    fig_h2h_bot.update_layout(
-        yaxis=dict(categoryorder='total descending',  title=''), 
-        xaxis = dict(title=''),
-        margin=dict(l=10, r=10, t=50, b=30) , 
+    fig_h2h_top.update_layout(
+            title={
+                'text': "Head-to-Head: Average points per game",  
+                'font': {'size': 20},
+                'xanchor': 'left'
+            },
+        yaxis=dict(categoryorder='total ascending', title=''), 
+        xaxis = dict(title='', showline = False, showticklabels = False, ticks=""),
+        margin=dict(l=10, r=10, t=50, b=10),
         showlegend=False,
         coloraxis_showscale=False,
-        autosize=True
+        autosize=True,
     )
-
-    fig_h2h_bot.update_traces(
+    fig_h2h_top.update_traces(
         texttemplate='%{x:.1f}',
-        showlegend=False
-    )
+        showlegend=False,
+        textfont_size=14,
+        textposition="inside"
+        )
+
+ 
 
 
 
@@ -1606,24 +1684,16 @@ def tab_content_teamstat(selected_team):
                         className="mb-1", 
                         ),
                         dbc.Row(
-                            html.P(
-                            f"{current_position} in {current_league} ( {current_points} points)",
-                            style={
-                                "fontSize": "18px",  
-                                "fontWeight": "bold", 
-                                "color": "white",       
-                                "margin": "0"          
-                            }
-                            ), 
-                        className="mb-1", 
+                            tbl_teamstandings,
+                        className="my-1", 
                         ),
                         ],
-                        width=3
+                        width=7
                     ), 
-                    dbc.Col(
-                        info_table,
-                        width=4
-                    ) ,
+                    # dbc.Col(
+                    #     info_table,
+                    #     width=4
+                    # ) ,
                     dbc.Col(
                         dcc.Graph(
                             id='fig_team_tblpos',
@@ -1642,57 +1712,36 @@ def tab_content_teamstat(selected_team):
                 className="m-1"
             ),
             dbc.Row(
-                style={'height': '45vh'},
-                children=[ 
-                    dbc.Col(
-                        dcc.Graph(
-                            id='fig_teamstat_matches',
-                            figure=fig_teamstat_matches,
-                            style={'height': '100%'}
-                        ),
-                        width=7 ,
-                        className="m-0 mb-2"
+            style={'height': '45vh'},
+            children=[ 
+                dbc.Col(
+                    dcc.Graph(
+                        id='fig_teamstat_matches',
+                        figure=fig_teamstat_matches,
+                        style={'height': '100%', 'width': '100%'}
                     ),
-                    dbc.Col(
-                        children=[
-                            dbc.Row(
-                                style={'height': '45vh'},
-                                children=[
-                                    dbc.Col(
-                                        dcc.Graph(
-                                            id='fig_h2h_top',
-                                            figure=fig_h2h_top,
-                                            style={'height': '100%'}
-                                        ),
-                                        width=6,  
-                                        className="m-0"
-                                    ),
-                                    dbc.Col(
-                                        dcc.Graph(
-                                            id='fig_h2h_bot',
-                                            figure=fig_h2h_bot,
-                                            style={'height': '100%'}
-                                        ),
-                                        width=6,  
-                                        className="m-0"
-                                    ),
-                                ],
-                                className="m-0 mb-2"
-                            )
-                        ],
-                        width=5,  
-                        className="mb-2"
-                    ) 
+                    width=7,
+               #     className="m-1"  
+                ),
+                dbc.Col(
+                    dcc.Graph(
+                        id='fig_h2h_top',
+                        figure=fig_h2h_top,
+                        style={'height': '100%', 'width': '100%'}
+                    ),
+                    width=5,
+               #     className="m-1"  
+                ),
                 ]
-                 ,className="mt-3 mb-3"
+                ,className="m-1",
             )
         ]
-)
+    )
 
 
 ################################################################################################
 
-#                               TAB 5 TEAMCOMPARISON
+#                               TAB 6 TEAMCOMPARISON
 
 ################################################################################################
 
