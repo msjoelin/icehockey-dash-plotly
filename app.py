@@ -133,7 +133,7 @@ app.layout = html.Div([
         ### HEADER ROW 
         dbc.Row(
             [
-                dbc.Col(html.H1("🏒 Mackan's Hockey Hub"), width=6, className="d-flex align-items-center"), 
+                dbc.Col(html.H1("🏒 Mackan's Hockey Hub"), width=12, md=6, className="d-flex justify-content-center justify-content-md-start align-items-center"), 
                 dbc.Col(
                     dbc.Button(
                         "About Mackan's Hockey Hub",
@@ -142,8 +142,8 @@ app.layout = html.Div([
                         size="sm",
                         style={"rightMargin": "20px"}
                     ),
-                    width=6,  
-                    className="d-flex justify-content-end align-items-center"
+                     width=12, md=6,  
+                    className="d-flex justify-content-center justify-content-md-end align-items-center"
                 ),
             ],
             className="mt-2",
@@ -160,6 +160,8 @@ app.layout = html.Div([
                         html.Br(),
                         html.P("You’ll find data from Sweden’s top two leagues, SHL and HockeyAllsvenskan, updated daily 📅 to keep things fresh."),
                         html.P("No promises that it’s perfect—so if you spot something odd, just roll with it. This is for fun, after all! 🎉"),
+                        html.Br(),
+                        html.P("Unfortunately, the dashboard is not yet optimized for mobile 📱, so the mobile experience is not very good 😔"),
                         html.Br(),
                         html.P([
                             "Got questions, ideas, or just want to say hi? 💡 Shoot me an email at ",
@@ -197,12 +199,10 @@ app.layout = html.Div([
                         dbc.Tab(label='📋 Team Statistics', tab_id='tab-5'),
                         dbc.Tab(label='⚖️ Team Comparison', tab_id='tab-6'),
                     ],
-                    className="bg-dark text-white" 
+                    className="bg-dark text-white d-flex justify-content-center" 
                 )
-            ])
-        ]
-        , className="mb-3 mt-3"
-        ),
+            ], width = 12)
+        ], className="mb-3 mt-3"),
        
      ### CONTENT HEADER ROW  
      dbc.Container(
@@ -214,37 +214,38 @@ app.layout = html.Div([
                 dbc.Row(
                     [
                         dbc.Col(
-                            html.H2("Your Title Here", id="tab-title", style={"textAlign": "left", "margin": "10px", 'marginRight': '0px', "fontSize":"28px"}), 
-                            width="auto"
+                            html.H2(
+                                "Your Title Here", 
+                                id="tab-title",
+                                style={"textAlign": "left", "margin": "10px", "fontSize":"28px"}), 
+                                width="auto"
                         ),
                         dbc.Col(
                             dbc.Button(
                                 html.I(className="fas fa-info-circle"),
                                 id="info-button",
-                                className="btn-sm btn-info float-end",
+                                className="btn-sm btn-info",
                                 n_clicks=0,
                                 style={
                                     "font-size": "1.2rem",
                                     "color": "white",
                                     "background-color": "transparent",
-                                    "border": "none",
-                                    'marginRight': '0px',  
-                                    'marginLeft': '5px' 
+                                    "border": "none"
                                 },
                             ),
-                            width="auto"
+                            width="auto",
+                            className="d-flex align-items-center justify-content-end"
                         ),
                     ],
-                    className="g-0",  
+                    className="g-0 d-flex flex-wrap",  
                     ),
-                    width=4  
+                    width=12, md=4   
                 ),
             
             # Relevant Filter Section  
             dbc.Col(
                 html.Div(
                     [
-                    
                             dcc.Dropdown(
                                 id='league-dropdown',
                                 options=[{'label': grp, 'value': grp} for grp in df_team_games['league'].unique()],
@@ -354,7 +355,7 @@ app.layout = html.Div([
                             ],
                     style={'display': 'flex', 'flexDirection': 'row', 'flexWrap': 'wrap', 'justifyContent': 'flex-start', 'align-items': 'flex-start'}
                     ),
-                    width=8  
+                    width=12, md=8  
                 ),  
             ],
             align="left"  ,
@@ -851,7 +852,7 @@ def tab_content_table(df_table_filtered):
                         
                     data=df_table_filtered.to_dict('records'),
                     page_size=len(df_table_filtered),  
-                    style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%','overflowX': 'auto'},
+                    style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%', 'overflowX': 'auto', 'overflowY': 'auto',},
                     markdown_options={"html": True}, 
                     style_cell={
                         'textAlign': 'left',
@@ -873,22 +874,22 @@ def tab_content_table(df_table_filtered):
                         'padding': '3px',
                     },
                      style_cell_conditional=[
-                        {'if': {'column_id': 'table_position'}, 'width': '3%', 'textAlign': 'center'},
-                        {'if': {'column_id': 'team'}, 'width': '12%'},
-                        {'if': {'column_id': 'games'}, 'width': '3%'},
-                        {'if': {'column_id': 'points'}, 'width': '5%'},
-                        {'if': {'column_id': 'goal_difference_txt'}, 'width': '7%'},
-                        {'if': {'column_id': 'win'}, 'width': '4%',},
-                        {'if': {'column_id': 'ot_win'}, 'width': '4%',},
-                        {'if': {'column_id': 'ot_loss'}, 'width': '4%',},
-                        {'if': {'column_id': 'lost'}, 'width': '4%',},
-                        {'if': {'column_id': 'last_5_icons'}, 'width': '9%',},
-                        {'if': {'column_id': 'avg_points'}, 'width': '6%',},
-                        {'if': {'column_id': 'avg_points_pregame_ahead'}, 'width': '6%',},
-                        {'if': {'column_id': 'avg_points_pregame_behind'}, 'width': '6%',},
-                        {'if': {'column_id': 'avg_scored'}, 'width': '6%',},
-                        {'if': {'column_id': 'avg_conceded'}, 'width': '6%',},
-                        {'if': {'column_id': 'avg_goals_game'}, 'width': '6%',},                        
+                        {'if': {'column_id': 'table_position'}, 'minWidth': '3px', 'textAlign': 'center'},
+                        {'if': {'column_id': 'team'}, 'minWidth': '70px', 'maxWidth': '100px',},
+                        {'if': {'column_id': 'games'}, 'minWidth': '3px',},
+                        {'if': {'column_id': 'points'}, 'minWidth': '8px',},
+                        {'if': {'column_id': 'goal_difference_txt'}, 'minWidth': '12px',},
+                        {'if': {'column_id': 'win'}, 'minWidth': '8px', },
+                        {'if': {'column_id': 'ot_win'}, 'minWidth': '8px', },
+                        {'if': {'column_id': 'ot_loss'}, 'minWidth': '8px', },
+                        {'if': {'column_id': 'lost'}, 'minWidth': '8px', },
+                        {'if': {'column_id': 'last_5_icons'}, 'minWidth': '15px',},
+                        {'if': {'column_id': 'avg_points'}, 'minWidth': '11px', },
+                        {'if': {'column_id': 'avg_points_pregame_ahead'}, 'minWidth': '11px', },
+                        {'if': {'column_id': 'avg_points_pregame_behind'}, 'minWidth': '11px', },
+                        {'if': {'column_id': 'avg_scored'}, 'minWidth': '11px', },
+                        {'if': {'column_id': 'avg_conceded'}, 'minWidth': '11px',},
+                        {'if': {'column_id': 'avg_goals_game'}, 'minWidth': '11px', },                        
                     ],
                     style_data_conditional=tbl_position_style + [
                         {
@@ -896,6 +897,7 @@ def tab_content_table(df_table_filtered):
                             'fontWeight': 'bold'  
                         }
                     ],
+                    fixed_columns={'headers': True, 'data': 2},
                     row_selectable=False,
                     cell_selectable=False,
                     style_as_list_view=True,
@@ -905,16 +907,14 @@ def tab_content_table(df_table_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '100%'},  
+        style={'height': '100%', 'overflowX': 'auto', 'overflowY': 'auto'},  
         children=[
             dbc.Row(
-                style={'height': '100%'},  
                 children=[
                     dbc.Col(
                         table_tbl,
                         width=12,
                         className = "my-1",
-                        # style={'height': '100%', 'padding':'0'}  
                     ),
                 ]
             )
@@ -1008,13 +1008,13 @@ def tab_content_games(df_season_league_filtered):
                     },
                     ],
                      style_cell_conditional=[
-                        {'if': {'column_id': 'league'}, 'width': '100px'},
-                        {'if': {'column_id': 'date_adjusted'}, 'width': '100px'},
-                        {'if': {'column_id': 'team'}, 'width': '200px', "paddingLeft": "40px"},
-                        {'if': {'column_id': 'score_opponent'}, 'width': '50px', "textAlign": "center"},
-                        {'if': {'column_id': 'score_team'}, 'width': '50px', "textAlign": "center"},    
-                        {'if': {'column_id': 'periodscore'}, 'width': '90px', "textAlign": "center", 'fontSize': '12px'},    
-                        {'if': {'column_id': 'opponent'}, 'width': '240px', "paddingLeft": "40px"},                        
+                        {'if': {'column_id': 'league'}, 'minWidth': '100px'},
+                        {'if': {'column_id': 'date_adjusted'}, 'minWidth': '100px'},
+                        {'if': {'column_id': 'team'}, 'minWidth': '200px', "paddingLeft": "40px"},
+                        {'if': {'column_id': 'score_opponent'}, 'minWidth': '50px', "textAlign": "center"},
+                        {'if': {'column_id': 'score_team'}, 'minWidth': '50px', "textAlign": "center"},    
+                        {'if': {'column_id': 'periodscore'}, 'minWidth': '90px', "textAlign": "center", 'fontSize': '12px'},    
+                        {'if': {'column_id': 'opponent'}, 'minWidth': '240px', "paddingLeft": "40px"},                        
                     ],
                     row_selectable=False,
                     cell_selectable=False,
@@ -1025,17 +1025,14 @@ def tab_content_games(df_season_league_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '100%', 'overflowX': 'auto'},
+        style={'height': '100%', 'overflowX': 'auto', 'overflowY': 'auto'},  
         children=[
             dbc.Row(
-                style={'height': 'auto'},  
                 children=[
                     dbc.Col(
                         games_tbl,
                         width=8,
                         className = "my-1",
-                        style={'height': 'auto'} 
-                        # style={'height': '100%', 'padding':'0'}  
                     ),
                 ]
             )
@@ -1047,7 +1044,7 @@ def tab_content_games(df_season_league_filtered):
 
 ################################################################################################
 
-#                               TAB 2 POSITION BY MATCHDAY
+#                               TAB 3 POSITION BY MATCHDAY
 
 ################################################################################################
 
@@ -1138,7 +1135,7 @@ def tab_content_points(df_season_league_filtered, selected_matchdaymetric):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '65vh'},  
+        style={'height': '65vh', 'overflowX': 'auto'},  
         children=[
             dbc.Row(
                 style={'height': '100%'},  
@@ -1147,7 +1144,7 @@ def tab_content_points(df_season_league_filtered, selected_matchdaymetric):
                         dcc.Graph(
                             id='fig-tblpos',
                             figure=fig_tblpos,
-                            style={'height': '100%'}  
+                            style={'height': '100%', 'minWidth': '1000px', 'width': '100%', 'overflowX': 'auto'}  
                         ),
                         width=12,
                         style={'height': '100%'}  
@@ -1160,7 +1157,7 @@ def tab_content_points(df_season_league_filtered, selected_matchdaymetric):
 
 ##############################################################################################
 
-#                               TAB 3 POINT DISTRIBUTION
+#                               TAB 4 POINT DISTRIBUTION
 
 ##############################################################################################
 
@@ -1248,7 +1245,6 @@ def tab_content_pointdistr(df_league_matchday_filtered):
                 'selector': '.dash-table-tooltip',
                 'rule': 'background-color: grey; font-family: monospace; color: white'
             }],
-
         style_table={'width': '100%', 'minWidth': '100%', 'maxWidth': '100%','overflowX': 'auto'},
         style_header={
             'backgroundColor': 'rgb(30, 30, 30)',
@@ -1266,8 +1262,11 @@ def tab_content_pointdistr(df_league_matchday_filtered):
             'fontSize': '14px'
         },
         style_data_conditional=[
-            {'if': {'column_id': c}, 'width': '150px'} for c in ['min', 'max', 'max_min_diff', 'median', 'std', 'top_6_limit', 'top_12_limit']
-        ] + outlier_styles,
+            {'if': {'column_id': c}, 'minWidth': '50px'} for c in ['min', 'max', 'max_min_diff', 'median', 'std', 'top_6_limit', 'top_12_limit']   
+        ] + [
+             {'if': {'column_id': 'season'}, 'minWidth': '100px'}
+        ] + 
+        outlier_styles,
         style_as_list_view=True,
         page_size=12,
         markdown_options={"html": True},
@@ -1302,10 +1301,9 @@ def tab_content_pointdistr(df_league_matchday_filtered):
 
     return dbc.Container(
         fluid=True,
-        style={'height': '65vh'},  
+        style={'height': '65vh', 'overflowX': 'auto'},  
         children=[
             dbc.Row(
-                style={'height': '100%'},  
                 children=[
                     dbc.Col(
                         [
@@ -1316,20 +1314,31 @@ def tab_content_pointdistr(df_league_matchday_filtered):
                                     " at matchday ",
                                     html.B(matchday)
                                 ],
-                            style={'textAlign': 'left', 'marginBottom': '15px'}
+                             
                             ),
                         seasonstats_table,
                         ],
-                        width=5,
-                        className = "my-1"  
+                        md=5 , 
+                        style={'height': '100%', 'minWidth': '500px', 'maxWidth': '600px', 'width': '100%', 'overflowX': 'auto'}  
                     ),
                     dbc.Col(
+                        [
+                        html.H4(
+                               [
+                                   "Boxplot Point Distribution for ",
+                                   html.B(league.upper()),
+                                   " at matchday ",
+                                   html.B(matchday)
+                               ],
+                            
+                           ),
                         dcc.Graph(
                             id='fig_tblpos_distr',
                             figure=fig_tblpos_distr,
-                            style={'height': '100%'}  
-                        ),
-                        width=7,
+                            style={'height': '100%', 'minWidth': '500px', 'width': '100%', 'overflowX': 'auto'}  
+                        )
+                        ],
+                        md=7  ,
                         style={'height': '100%'}  
                     ),
                 ]
@@ -1436,19 +1445,19 @@ def tab_content_teamstat(selected_team):
                         'padding': '3px',
                     },
                      style_cell_conditional=[
-                        {'if': {'column_id': 'league_short'}, 'width': '5%', 'textAlign': 'center'},
-                        {'if': {'column_id': 'table_position'}, 'width': '5%', 'textAlign': 'center'},
-                        {'if': {'column_id': 'team'}, 'width': '18%'},
-                        {'if': {'column_id': 'points'}, 'width': '8%'},
-                        {'if': {'column_id': 'nbr_played'}, 'width': '6%'},
-                        {'if': {'column_id': 'nbr_win'}, 'width': '6%',},
-                        {'if': {'column_id': 'nbr_draw'}, 'width': '6%',},
-                        {'if': {'column_id': 'nbr_lost'}, 'width': '6%',},
-                        {'if': {'column_id': 'avg_points'}, 'width': '8%',},
-                        {'if': {'column_id': 'avg_points_home'}, 'width': '8%',},
-                        {'if': {'column_id': 'avg_points_away'}, 'width': '8%',},
-                        {'if': {'column_id': 'avg_scored'}, 'width': '8%',},
-                        {'if': {'column_id': 'avg_conceded'}, 'width': '8%',},                  
+                        {'if': {'column_id': 'league_short'}, 'minWidth': '5px', 'textAlign': 'center'},
+                        {'if': {'column_id': 'table_position'}, 'minWidth': '5px', 'textAlign': 'center'},
+                        {'if': {'column_id': 'team'}, 'minWidth': '20px'},
+                        {'if': {'column_id': 'points'}, 'minWidth': '10px'},
+                        {'if': {'column_id': 'nbr_played'}, 'minWidth': '8px'},
+                        {'if': {'column_id': 'nbr_win'}, 'minWidth': '8px',},
+                        {'if': {'column_id': 'nbr_draw'}, 'minWidth': '8px',},
+                        {'if': {'column_id': 'nbr_lost'}, 'minWidth': '8px',},
+                        {'if': {'column_id': 'avg_points'}, 'minWidth': '10px',},
+                        {'if': {'column_id': 'avg_points_home'}, 'minWidth': '10px',},
+                        {'if': {'column_id': 'avg_points_away'}, 'minWidth': '10px',},
+                        {'if': {'column_id': 'avg_scored'}, 'minWidth': '10px',},
+                        {'if': {'column_id': 'avg_conceded'}, 'minWidth': '10px',},                  
                     ],
                     style_data_conditional=tbl_teamposition_style + [
                         {
@@ -1662,16 +1671,13 @@ def tab_content_teamstat(selected_team):
         textposition="inside"
         )
 
- 
-
-
 
     return dbc.Container(
         fluid=True,  
-        style={'height': '65vh'},  
+        style={'minHeight': '65vh', 'overflowX': 'auto', 'overflowY': 'auto'},  
         children=[ 
             dbc.Row(
-                style={'height': '20vh'},
+                style={'minHeight': '25vh', 'overflowX': 'auto', 'overflowY': 'auto'}, 
                 children=[
                     dbc.Col(
                         children=[
@@ -1688,22 +1694,22 @@ def tab_content_teamstat(selected_team):
                         className="my-1", 
                         ),
                         ],
-                        width=7
+                        xs=12, sm=12, md=7,
                     ), 
-                    # dbc.Col(
-                    #     info_table,
-                    #     width=4
-                    # ) ,
                     dbc.Col(
                         dcc.Graph(
                             id='fig_team_tblpos',
                             figure=fig_team_tblpos,
-                            style={'height': '100%',
-                            'padding-left': '3px', 
-                            'padding-right': '3px'
-                            }
+                            style={
+                                'height': '100%',
+                                'minWidth': '600px',
+                                'minHeight': '150px',
+                                'overflowX': 'auto', 
+                                'padding-left': '3px', 
+                                'padding-right': '3px',
+                                }
                         ),
-                        width=5 ,
+                        xs=12, sm=12, md=5 ,
                         style={
                                'padding-left': '3px', 
                             'padding-right': '3px'}  
@@ -1712,25 +1718,33 @@ def tab_content_teamstat(selected_team):
                 className="m-1"
             ),
             dbc.Row(
-            style={'height': '45vh'},
+            style={'minHeight': '45vh'},
             children=[ 
                 dbc.Col(
                     dcc.Graph(
                         id='fig_teamstat_matches',
                         figure=fig_teamstat_matches,
-                        style={'height': '100%', 'width': '100%'}
+                        style={
+                            'height': '100%', 
+                            'minWidth': '600px',
+                            'minHeight': '300px',
+                            'overflowX': 'auto'
+                            }
                     ),
-                    width=7,
-               #     className="m-1"  
+                    xs=12, sm=12, md=7,
                 ),
                 dbc.Col(
                     dcc.Graph(
                         id='fig_h2h_top',
                         figure=fig_h2h_top,
-                        style={'height': '100%', 'width': '100%'}
+                        style={
+                            'height': '100%', 
+                            'minWidth': '600px',
+                            'minHeight': '300px',
+                            'overflowX': 'auto'
+                            }
                     ),
-                    width=5,
-               #     className="m-1"  
+                    xs=12, sm=12, md=5,
                 ),
                 ]
                 ,className="m-1",
@@ -1860,7 +1874,12 @@ def tab_content_teamcomparison(metricselector_text, selected_league):
         sort_mode='single',    
         style_as_list_view=True,
         markdown_options={"html": True},
-        style_data_conditional=styles,
+        style_data_conditional=styles + 
+        [
+            {'if': {'column_id': 'team'}, 'minWidth': '120px'},
+        ] + [
+            {'if': {'column_id': col}, 'minWidth': '90px'} for col in df_team_season_aggr_pivot_formatted if col != 'team'
+        ],
         row_selectable=False,
         cell_selectable=False
     )
